@@ -1,0 +1,30 @@
+version: '3.7'
+services:
+  db:
+    container_name: postgres
+    image: postgres:16.4-bookworm
+    restart: on-failure
+    user: postgres
+    env_file:
+      - .env
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    networks:
+      - gorator
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    image: backend
+    restart: on-failure
+    depends_on:
+      - db
+    networks:
+      - gorator
+
+networks:
+  gorator:
+    name: gorator
+    driver: bridge
