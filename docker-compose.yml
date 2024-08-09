@@ -4,7 +4,6 @@ services:
     container_name: postgres
     image: postgres:16.4-bookworm
     restart: on-failure
-    user: postgres
     env_file:
       - .env
     volumes:

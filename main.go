@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/GORATOR/backend/internal/api"
+	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/utils"
 	"github.com/rs/cors"
 )
@@ -19,6 +20,10 @@ var (
 
 func main() {
 	fmt.Println("work in progress...")
+	err := database.CreateDatabaseConnection("localhost", 5432, "postgres", "postgres")
+	if err != nil {
+		panic(err)
+	}
 	mux := http.NewServeMux()
 	setupRouter(mux)
 	allowedOrigins := []string{allowedOrigin}
