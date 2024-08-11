@@ -4,7 +4,6 @@ services:
     container_name: postgres
     image: postgres:16.4-bookworm
     restart: on-failure
-    user: postgres
     env_file:
       - .env
     volumes:
@@ -19,6 +18,12 @@ services:
     container_name: backend
     image: backend
     restart: on-failure
+    environment:
+      - GORATOR_DB_HOSTNAME=db
+      - GORATOR_DB_PORT=5432
+      - GORATOR_DB_USER=${POSTGRES_USER}
+      - GORATOR_DB_PASSWORD=${POSTGRES_PASSWORD}
+      - GORATOR_IS_DEBUG=0
     depends_on:
       - db
     networks:

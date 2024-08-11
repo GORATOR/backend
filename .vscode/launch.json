@@ -10,7 +10,7 @@
             ],
             "program": "${workspaceFolder}",
             "env": {
-               
+               "GORATOR_IS_DEBUG": "1"
             }
         }
     ]
