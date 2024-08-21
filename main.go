@@ -58,4 +58,5 @@ func main() {
 
 func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(apiPrefix+"/healthcheck", api.Healthscheck)
+	mux.HandleFunc(apiPrefix+"/api/{id}/envelope", api.Envelope)
 }
