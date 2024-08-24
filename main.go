@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/GORATOR/backend/internal/api"
@@ -35,6 +36,24 @@ func printAppMode() {
 	fmt.Printf("Running application in %s mode\n", appMode)
 }
 
+func runCliMode() {
+	switch os.Args[1] {
+	case "-s":
+		setupDatabase()
+		return
+	default:
+		//todo: print help
+	}
+}
+
+func setupDatabase() {
+	db := database.GetDatabaseConnection()
+	err := db.AutoMigrate(&models.EnvelopeEventCommon{}, &models.EnvelopeEventExtra{})
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
 	printAppMode()
 
@@ -44,14 +63,9 @@ func main() {
 		panic(err)
 	}
 
-	db := database.GetDatabaseConnection()
-	err = db.Migrator().CreateTable(&models.EnvelopeEventCommon{})
-	if err != nil {
-		panic(err)
-	}
-	err = db.Migrator().CreateTable(&models.EnvelopeEventExtra{})
-	if err != nil {
-		panic(err)
+	if len(os.Args) > 1 {
+		runCliMode()
+		return
 	}
 
 	mux := http.NewServeMux()
