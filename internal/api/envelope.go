@@ -2,10 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
+	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
 	"github.com/GORATOR/backend/internal/utils"
 )
@@ -21,8 +23,8 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		envelopeBadRequest(w)
 		return
 	}
-	bodyAsString := string(body)
-	postItems := strings.Split(bodyAsString, "\n")
+
+	postItems := isValidRequest(body)
 	if len(postItems) != 3 {
 		envelopeBadRequest(w)
 		return
@@ -41,12 +43,30 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = database.EnvelopeSaveData(&commonData, postItems)
+	if err != nil {
+		fmt.Println(err)
+		envelopeBadRequest(w)
+		return
+	}
+
 	utils.HttpReturnJson(
 		w,
 		models.EnvelopeResponse{
 			Id: commonData.EventId,
 		},
 	)
+}
+
+func isValidRequest(body []byte) []string {
+	postItems := strings.Split(string(body), "\n")
+	result := []string{}
+	for _, item := range postItems {
+		if len(item) > 0 {
+			result = append(result, item)
+		}
+	}
+	return result
 }
 
 func envelopeBadRequest(w http.ResponseWriter) {
