@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 
@@ -18,7 +17,7 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := io.ReadAll(r.Body)
+	body, err := utils.GetBodyBytes(r)
 	if err != nil {
 		envelopeBadRequest(w)
 		return
