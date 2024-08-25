@@ -2,10 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
+	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
 	"github.com/GORATOR/backend/internal/utils"
 )
@@ -21,22 +23,27 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		envelopeBadRequest(w)
 		return
 	}
-	bodyAsString := string(body)
-	postItems := strings.Split(bodyAsString, "\n")
+
+	postItems := isValidRequest(body)
 	if len(postItems) != 3 {
 		envelopeBadRequest(w)
 		return
 	}
 
-	//todo: process every item of postItems
-
-	var commonData models.EnvelopeRequestEventCommon
-	if err := json.Unmarshal([]byte(postItems[0]), &commonData); err != nil {
+	var commonRecord models.EnvelopeEventCommon
+	if err := json.Unmarshal([]byte(postItems[0]), &commonRecord); err != nil {
 		envelopeBadRequest(w)
 		return
 	}
 
-	if commonData.EventId == "" {
+	if commonRecord.EventId == "" {
+		envelopeBadRequest(w)
+		return
+	}
+
+	err = database.EnvelopeSaveData(&commonRecord, postItems)
+	if err != nil {
+		fmt.Println(err)
 		envelopeBadRequest(w)
 		return
 	}
@@ -44,9 +51,20 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 	utils.HttpReturnJson(
 		w,
 		models.EnvelopeResponse{
-			Id: commonData.EventId,
+			Id: commonRecord.EventId,
 		},
 	)
+}
+
+func isValidRequest(body []byte) []string {
+	postItems := strings.Split(string(body), "\n")
+	result := []string{}
+	for _, item := range postItems {
+		if len(item) > 0 {
+			result = append(result, item)
+		}
+	}
+	return result
 }
 
 func envelopeBadRequest(w http.ResponseWriter) {
