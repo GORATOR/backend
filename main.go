@@ -48,7 +48,11 @@ func runCliMode() {
 
 func setupDatabase() {
 	db := database.GetDatabaseConnection()
-	err := db.AutoMigrate(&models.EnvelopeEventCommon{}, &models.EnvelopeEventExtra{})
+	err := db.AutoMigrate(
+		&models.EventCommonSdk{},
+		&models.EnvelopeEventCommon{},
+		&models.EnvelopeEventExtra{},
+	)
 	if err != nil {
 		panic(err)
 	}

@@ -30,20 +30,18 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//todo: process every item of postItems
-
-	var commonData models.EnvelopeRequestEventCommon
-	if err := json.Unmarshal([]byte(postItems[0]), &commonData); err != nil {
+	var commonRecord models.EnvelopeEventCommon
+	if err := json.Unmarshal([]byte(postItems[0]), &commonRecord); err != nil {
 		envelopeBadRequest(w)
 		return
 	}
 
-	if commonData.EventId == "" {
+	if commonRecord.EventId == "" {
 		envelopeBadRequest(w)
 		return
 	}
 
-	err = database.EnvelopeSaveData(&commonData, postItems)
+	err = database.EnvelopeSaveData(&commonRecord, postItems)
 	if err != nil {
 		fmt.Println(err)
 		envelopeBadRequest(w)
@@ -53,7 +51,7 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 	utils.HttpReturnJson(
 		w,
 		models.EnvelopeResponse{
-			Id: commonData.EventId,
+			Id: commonRecord.EventId,
 		},
 	)
 }

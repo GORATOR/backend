@@ -1,23 +1,10 @@
 package database
 
 import (
-	"encoding/json"
-
 	"github.com/GORATOR/backend/internal/models"
 )
 
-func EnvelopeSaveData(commonData *models.EnvelopeRequestEventCommon, postItems []string) error {
-	sdkBytes, err := json.Marshal(commonData.SDK)
-	if err != nil {
-		return err
-	}
-
-	commonRecord := models.EnvelopeEventCommon{
-		SentAt:  commonData.SentAt,
-		DSN:     commonData.DSN,
-		EventId: commonData.EventId,
-		SDK:     string(sdkBytes),
-	}
+func EnvelopeSaveData(commonRecord *models.EnvelopeEventCommon, postItems []string) error {
 	commonResult := postgresConnection.Create(&commonRecord)
 	if commonResult.Error != nil {
 		return commonResult.Error
