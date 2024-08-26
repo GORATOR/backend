@@ -5,9 +5,20 @@ import (
 )
 
 func EnvelopeSaveData(commonRecord *models.EnvelopeEventCommon, postItems []string) error {
-	sdkResult := postgresConnection.FirstOrCreate(&commonRecord.EventCommonSdk)
+	sdkResult := postgresConnection.Where(
+		&commonRecord.EventCommonSdk,
+		"name = ? and version = ?",
+		commonRecord.EventCommonSdk.Model,
+		commonRecord.EventCommonSdk.Version,
+	)
 	if sdkResult.Error != nil {
 		return sdkResult.Error
+	}
+	if sdkResult.RowsAffected == 0 {
+		sdkResult = postgresConnection.Create(&commonRecord.EventCommonSdk)
+		if sdkResult.Error != nil {
+			return sdkResult.Error
+		}
 	}
 	commonRecord.EventCommonSdkID = commonRecord.EventCommonSdk.ID
 	commonResult := postgresConnection.Create(&commonRecord)
