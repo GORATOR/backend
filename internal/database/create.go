@@ -1,17 +1,30 @@
 package database
 
 import (
+	"errors"
+
 	"github.com/GORATOR/backend/internal/models"
+	"gorm.io/gorm"
 )
 
 func EnvelopeSaveData(commonRecord *models.EnvelopeEventCommon, postItems []string) error {
-	sdkResult := postgresConnection.Where(
-		&commonRecord.EventCommonSdk,
-		"name = ? and version = ?",
-		commonRecord.EventCommonSdk.Model,
-		commonRecord.EventCommonSdk.Version,
-	)
-	if sdkResult.Error != nil {
+	var sdkResult *gorm.DB
+
+	if commonRecord.EventCommonSdk.Version == "" && commonRecord.EventCommonSdk.Name == "" {
+		sdkResult = postgresConnection.Where(
+			"name = ? and version = ?",
+			models.UndefinedSdk.Name,
+			models.UndefinedSdk.Version,
+		).First(&commonRecord.EventCommonSdk)
+	} else {
+		sdkResult = postgresConnection.Where(
+			"name = ? and version = ?",
+			commonRecord.EventCommonSdk.Name,
+			commonRecord.EventCommonSdk.Version,
+		).First(&commonRecord.EventCommonSdk)
+	}
+
+	if sdkResult.Error != nil && !errors.Is(sdkResult.Error, gorm.ErrRecordNotFound) {
 		return sdkResult.Error
 	}
 	if sdkResult.RowsAffected == 0 {

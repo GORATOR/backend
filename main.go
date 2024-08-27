@@ -58,12 +58,11 @@ func setupDatabase() {
 	if err != nil {
 		panic(err)
 	}
-	uniqueIndexResult := db.Raw("ALTER TABLE event_common_sdks ADD CONSTRAINT unique_name_version UNIQUE (name, version)")
+	uniqueIndexResult := db.Raw("CREATE UNIQUE INDEX unique_name_version ON event_common_sdks (name, version)")
 	if uniqueIndexResult.Error != nil {
 		panic(uniqueIndexResult.Error)
 	}
-	undefinedSdkRecord := models.EventCommonSdk{Name: "undefined", Version: "undefined"}
-	undefinedSdkResult := db.Create(&undefinedSdkRecord)
+	undefinedSdkResult := db.Create(&models.UndefinedSdk)
 	if undefinedSdkResult.Error != nil &&
 		errors.Is(undefinedSdkResult.Error, gorm.ErrDuplicatedKey) {
 		panic(undefinedSdkResult.Error)

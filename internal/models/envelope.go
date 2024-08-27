@@ -2,6 +2,11 @@ package models
 
 import "gorm.io/gorm"
 
+var UndefinedSdk = EventCommonSdk{
+	Name:    "undefined",
+	Version: "undefined",
+}
+
 type EnvelopeResponse struct {
 	Id string `json:"id"`
 }
