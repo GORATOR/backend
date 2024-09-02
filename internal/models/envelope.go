@@ -7,6 +7,14 @@ var UndefinedSdk = EventCommonSdk{
 	Version: "undefined",
 }
 
+const (
+	EnvelopePostItemCommon  = 0
+	EnvelopePostItemType    = 1
+	EnvelopePostItemMessage = 2
+
+	EnvelopeRequiredPostItems = 3
+)
+
 type EnvelopeResponse struct {
 	Id string `json:"id"`
 }

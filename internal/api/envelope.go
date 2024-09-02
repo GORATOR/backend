@@ -1,13 +1,13 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
+	"github.com/GORATOR/backend/internal/service"
 	"github.com/GORATOR/backend/internal/utils"
 )
 
@@ -24,13 +24,14 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 	}
 
 	postItems := isValidRequest(body)
-	if len(postItems) != 3 {
+	if len(postItems) != models.EnvelopeRequiredPostItems {
 		envelopeBadRequest(w)
 		return
 	}
 
 	var commonRecord models.EnvelopeEventCommon
-	if err := json.Unmarshal([]byte(postItems[0]), &commonRecord); err != nil {
+	err = service.ParseSDK(&commonRecord, postItems)
+	if err != nil {
 		envelopeBadRequest(w)
 		return
 	}
