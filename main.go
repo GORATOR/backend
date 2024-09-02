@@ -54,6 +54,8 @@ func setupDatabase() {
 		&models.EventCommonSdk{},
 		&models.EnvelopeEventCommon{},
 		&models.EnvelopeEventExtra{},
+		&models.User{},
+		&models.Role{},
 	)
 	if err != nil {
 		panic(err)
@@ -61,6 +63,15 @@ func setupDatabase() {
 	uniqueIndexResult := db.Raw("CREATE UNIQUE INDEX unique_name_version ON event_common_sdks (name, version)")
 	if uniqueIndexResult.Error != nil {
 		panic(uniqueIndexResult.Error)
+	}
+	ruleActionResult := db.Debug().Exec(`
+    DO $$ BEGIN
+        CREATE TYPE public.rule_action AS ENUM ('create','read','update', 'delete');
+    EXCEPTION
+        WHEN duplicate_object THEN null;
+    END $$;`)
+	if ruleActionResult.Error != nil {
+		panic(ruleActionResult.Error)
 	}
 	undefinedSdkResult := db.Create(&models.UndefinedSdk)
 	if undefinedSdkResult.Error != nil &&
