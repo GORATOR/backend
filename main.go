@@ -13,6 +13,7 @@ import (
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
 	"github.com/GORATOR/backend/internal/utils"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/rs/cors"
 	"gorm.io/gorm"
 )
@@ -48,6 +49,17 @@ func runCliMode() {
 	}
 }
 
+func tryCreateRecord(db *gorm.DB, value interface{}) {
+	result := db.Create(value)
+	if result.Error == nil {
+		return
+	}
+	var err *pgconn.PgError
+	if errors.As(result.Error, &err) && err.Code != "23505" {
+		panic(err)
+	}
+}
+
 func setupDatabase() {
 	db := database.GetDatabaseConnection()
 	err := db.AutoMigrate(
@@ -55,6 +67,8 @@ func setupDatabase() {
 		&models.EnvelopeEventCommon{},
 		&models.EnvelopeEventExtra{},
 		&models.User{},
+		&models.Team{},
+		&models.Organization{},
 		&models.Role{},
 	)
 	if err != nil {
@@ -73,10 +87,37 @@ func setupDatabase() {
 	if ruleActionResult.Error != nil {
 		panic(ruleActionResult.Error)
 	}
-	undefinedSdkResult := db.Create(&models.UndefinedSdk)
-	if undefinedSdkResult.Error != nil &&
-		errors.Is(undefinedSdkResult.Error, gorm.ErrDuplicatedKey) {
-		panic(undefinedSdkResult.Error)
+	tryCreateRecord(db, &models.UndefinedSdk)
+
+	if config.IsDebug() {
+		var userCount int64
+		db.Model(&models.User{}).Count(&userCount)
+		if userCount > 0 {
+			return
+		}
+		//add test user
+		org := models.Organization{
+			Name:   "Test Organization",
+			Active: true,
+		}
+		tryCreateRecord(db, &org)
+
+		team := models.Team{
+			Organizations: []*models.Organization{&org},
+			Name:          "Test Team",
+			Active:        true,
+		}
+		tryCreateRecord(db, &team)
+
+		user := models.User{
+			Teams:         []*models.Team{&team},
+			Organizations: []*models.Organization{&org},
+			Username:      "user",
+			Password:      "pwd",
+			Email:         "user@email.com",
+			Active:        true,
+		}
+		tryCreateRecord(db, &user)
 	}
 }
 
