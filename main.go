@@ -95,7 +95,7 @@ func setupDatabase() {
 		if userCount > 0 {
 			return
 		}
-		//add test user
+
 		org := models.Organization{
 			Name:   "Test Organization",
 			Active: true,
@@ -151,4 +151,5 @@ func main() {
 func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(apiPrefix+"/healthcheck", api.Healthscheck)
 	mux.HandleFunc(apiPrefix+"/api/{id}/envelope/", api.Envelope)
+	mux.HandleFunc(apiPrefix+"/login", api.Login)
 }
