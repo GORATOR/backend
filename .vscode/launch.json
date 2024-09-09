@@ -11,7 +11,8 @@
             ],
             "program": "${workspaceFolder}",
             "env": {
-               "GORATOR_IS_DEBUG": "1"
+               "GORATOR_IS_DEBUG": "1",
+               "GORATOR_SALT": "12345"
             }
         }
     ]

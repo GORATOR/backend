@@ -3,10 +3,17 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
+	"github.com/GORATOR/backend/internal/service"
+	"github.com/GORATOR/backend/internal/utils"
+)
+
+var (
+	sessionStore = service.NewRAMSessionStore()
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -22,16 +29,31 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//todo: calc password hash
+	salt := utils.StringFromEnv("GORATOR_SALT", "")
+	if salt == "" {
+		log.Printf("Empty env GORATOR_SALT")
+	}
+
+	hash := utils.HashPassword(credReq.Password, salt)
 
 	var user models.User
 	db := database.GetDatabaseConnection()
-	searchResult := db.Where(&user, "username = ?", credReq.Username).Where("password = ?", credReq.Password).First(&user)
+	searchResult := db.Where(&user, "username = ?", credReq.Username).Where("password = ?", hash).First(&user)
 	if searchResult.Error != nil {
-		//todo: fmt
+		log.Printf("No user for ")
 		http.Error(w, "Not found", http.StatusNotFound)
 	}
 
-	//todo: create session
+	session, err := sessionStore.CreateSession(int(user.ID))
+	if err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:  "session",
+		Value: session.ID,
+		Path:  "/",
+	})
+	w.WriteHeader(http.StatusOK)
 
 }
