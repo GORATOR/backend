@@ -109,11 +109,17 @@ func setupDatabase() {
 		}
 		tryCreateRecord(db, &team)
 
+		salt := utils.StringFromEnv("GORATOR_SALT", "")
+		if salt == "" {
+			log.Printf("Empty env GORATOR_SALT")
+		}
+
+		hash := utils.HashPassword("pwd", salt)
 		user := models.User{
 			Teams:         []*models.Team{&team},
 			Organizations: []*models.Organization{&org},
 			Username:      "user",
-			Password:      "pwd",
+			Password:      hash,
 			Email:         "user@email.com",
 			Active:        true,
 		}
