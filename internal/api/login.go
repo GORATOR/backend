@@ -38,7 +38,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	var user models.User
 	db := database.GetDatabaseConnection()
-	searchResult := db.Where(&user, "username = ?", credReq.Username).Where("password = ?", hash).First(&user)
+	searchResult := db.Where(&models.User{Username: credReq.Username, Password: hash, Active: true}).First(&user)
 	if searchResult.Error != nil {
 		log.Printf("No user for ")
 		http.Error(w, "Not found", http.StatusNotFound)
