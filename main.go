@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/GORATOR/backend/internal/api"
+	"github.com/GORATOR/backend/internal/api/crud"
 	"github.com/GORATOR/backend/internal/config"
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
@@ -158,4 +159,13 @@ func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(apiPrefix+"/healthcheck", api.Healthscheck)
 	mux.HandleFunc(apiPrefix+"/api/{id}/envelope/", api.Envelope)
 	mux.HandleFunc(apiPrefix+"/login", api.Login)
+
+	crudEntities := []string{"user", "team", "organization"}
+	for _, e := range crudEntities {
+		mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPut, apiPrefix, e), crud.Update(e))
+		mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPost, apiPrefix, e), crud.Create(e))
+		mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodGet, apiPrefix, e), crud.Read(e))
+		mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodDelete, apiPrefix, e), crud.Delete(e))
+	}
+
 }
