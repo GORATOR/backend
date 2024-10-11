@@ -54,6 +54,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Value: session.ID,
 		Path:  "/",
 	})
+	resp := models.CredentialsResponse{
+		User:      user,
+		SessionId: session.ID,
+	}
+	json.NewEncoder(w).Encode(resp)
 	w.WriteHeader(http.StatusOK)
 
 }

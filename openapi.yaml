@@ -1,0 +1,133 @@
+openapi: 3.1.3
+info:
+  title: wip
+  description: wip
+  version: 0.0.1
+tags:
+  - name: auth
+    description: Authentication API
+  - name: service
+    description: Service API
+  - name: entity
+    description: Entity API (CRUD operations)
+paths:
+  '/login':
+    post:
+      tags:
+        - "auth"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                    description: sessionId
+                  user:
+                    $ref: '#/components/schemas/UserDetailed'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        avatar:
+          type: string
+        active:
+          type: boolean
+    UserDetailed:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        avatar:
+          type: string
+        active:
+          type: boolean
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/Team'
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+    Team:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar:
+          type: string
+        active:
+          type: boolean
+    TeamDetailed:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar:
+          type: string
+        active:
+          type: boolean
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+    Organization:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar:
+          type: string
+        active:
+          type: boolean
+    OrganizationDetailed:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar:
+          type: string
+        active:
+          type: boolean
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/Team'
