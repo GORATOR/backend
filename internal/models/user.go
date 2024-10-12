@@ -2,6 +2,10 @@ package models
 
 import "gorm.io/gorm"
 
+const (
+	UserEntityName = "user"
+)
+
 type User struct {
 	gorm.Model
 	Username      string

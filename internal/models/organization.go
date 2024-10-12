@@ -2,6 +2,10 @@ package models
 
 import "gorm.io/gorm"
 
+const (
+	OrganizationEntityName = "organization"
+)
+
 type Organization struct {
 	gorm.Model
 	Name   string

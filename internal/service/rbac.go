@@ -1,9 +1,11 @@
 package service
 
-import (
-	"github.com/GORATOR/backend/internal/models"
-)
+import "github.com/GORATOR/backend/internal/models"
 
-func HasUserAccessTo(user *models.User, entity string) bool {
-	return false
+func HasUserAccessToByModel(user *models.User, action models.RuleAction, entity interface{}) bool {
+	return HasUserAccessToByUserId(user.ID, action, entity)
+}
+
+func HasUserAccessToByUserId(userId uint, action models.RuleAction, entity interface{}) bool {
+	return true
 }

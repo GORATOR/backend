@@ -160,7 +160,11 @@ func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(apiPrefix+"/api/{id}/envelope/", api.Envelope)
 	mux.HandleFunc(apiPrefix+"/login", api.Login)
 
-	crudEntities := []string{"user", "team", "organization"}
+	crudEntities := []string{
+		models.UserEntityName,
+		models.TeamEntityName,
+		models.OrganizationEntityName,
+	}
 	for _, e := range crudEntities {
 		mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPut, apiPrefix, e), crud.Update(e))
 		mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPost, apiPrefix, e), crud.Create(e))
