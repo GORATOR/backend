@@ -3,8 +3,7 @@ FROM debian:bookworm-slim AS BUILD
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get -y install --no-install-recommends \
-    golang \
+    && apt-get -y install --no-install-recommends ca-certificates golang \
     && apt-get clean \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt /var/lib/dpkg /tmp/* /var/tmp/*

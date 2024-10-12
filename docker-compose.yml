@@ -23,7 +23,10 @@ services:
       - GORATOR_DB_PORT=5432
       - GORATOR_DB_USER=${POSTGRES_USER}
       - GORATOR_DB_PASSWORD=${POSTGRES_PASSWORD}
-      - GORATOR_IS_DEBUG=0
+      - GORATOR_IS_DEBUG=1
+      - GORATOR_ALLOWED_ORIGIN=http://localhost:5173
+    ports:
+      - 8080:8080
     depends_on:
       - db
     networks:
