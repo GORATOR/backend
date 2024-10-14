@@ -36,9 +36,7 @@ func Read(entity string) http.HandlerFunc {
 }
 
 func readFromDb(id uint, entity interface{}, w http.ResponseWriter) {
-	db := database.GetDatabaseConnection()
-	result := db.Where("id = ?", id).First(entity)
-	if result.Error != nil {
+	if database.GetRecord(id, entity) != nil {
 		http.Error(w, "DB error", http.StatusBadRequest)
 		return
 	}
