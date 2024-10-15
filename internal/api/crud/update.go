@@ -3,15 +3,20 @@ package crud
 import (
 	"net/http"
 
-	"github.com/GORATOR/backend/internal/api"
+	"github.com/GORATOR/backend/internal/models"
 )
 
-func Update(entity string) http.HandlerFunc {
+func Update[V models.Entity](entity string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, userId := api.IsAuthorized(r)
-		if !(userId > 0) {
-			http.Error(w, api.MessageUnauthorized, http.StatusUnauthorized)
+		var id uint
+		if !before(w, r, entity, &id) {
 			return
 		}
+
+		/*if !service.HasUserAccessToByUserId(id, models.ActionRead, entityInterface) {
+			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
+			return
+		}*/
+
 	}
 }

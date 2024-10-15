@@ -3,15 +3,16 @@ package crud
 import (
 	"net/http"
 
-	"github.com/GORATOR/backend/internal/api"
+	"github.com/GORATOR/backend/internal/models"
 )
 
-func Create(entity string) http.HandlerFunc {
+func Create[V models.Entity](entity string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, userId := api.IsAuthorized(r)
-		if !(userId > 0) {
-			http.Error(w, api.MessageUnauthorized, http.StatusUnauthorized)
+		if !before(w, r, entity, nil) {
 			return
 		}
+		//decode input
+		//filter fields
+
 	}
 }

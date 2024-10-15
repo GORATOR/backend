@@ -160,16 +160,15 @@ func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(apiPrefix+"/api/{id}/envelope/", api.Envelope)
 	mux.HandleFunc(apiPrefix+"/login", api.Login)
 
-	crudEntities := []string{
-		models.UserEntityName,
-		models.TeamEntityName,
-		models.OrganizationEntityName,
-	}
-	for _, e := range crudEntities {
-		mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPut, apiPrefix, e), crud.Update(e))
-		mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPost, apiPrefix, e), crud.Create(e))
-		mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodGet, apiPrefix, e), crud.Read(e))
-		mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodDelete, apiPrefix, e), crud.Delete(e))
-	}
+	setupEntityEndpoints[models.User](mux, models.UserEntityName)
+	setupEntityEndpoints[models.Organization](mux, models.OrganizationEntityName)
+	setupEntityEndpoints[models.Team](mux, models.TeamEntityName)
 
+}
+
+func setupEntityEndpoints[V models.Entity](mux *http.ServeMux, entityName string) {
+	mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPut, apiPrefix, entityName), crud.Update[V](entityName))
+	mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPost, apiPrefix, entityName), crud.Create[V](entityName))
+	mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodGet, apiPrefix, entityName), crud.Read[V](entityName))
+	mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodDelete, apiPrefix, entityName), crud.Delete[V](entityName))
 }

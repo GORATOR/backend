@@ -8,7 +8,7 @@ import (
 	"github.com/GORATOR/backend/internal/models"
 )
 
-func Read(entity string) http.HandlerFunc {
+func Read[V models.Entity](entity string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var id uint
 		if !before(w, r, entity, &id) {
@@ -20,26 +20,13 @@ func Read(entity string) http.HandlerFunc {
 			return
 		}*/
 
-		switch entity {
-		case models.UserEntityName:
-			var user = models.User{}
-			readFromDb(id, &user, w)
-		case models.OrganizationEntityName:
-			var org = models.Organization{}
-			readFromDb(id, &org, w)
-		case models.TeamEntityName:
-			var team = models.Team{}
-			readFromDb(id, &team, w)
+		data, err := database.GetRecord[V](id)
+		if err != nil {
+			http.Error(w, "DB error", http.StatusBadRequest)
+			return
 		}
+		json.NewEncoder(w).Encode(data)
+		w.WriteHeader(http.StatusOK)
 
 	}
-}
-
-func readFromDb(id uint, entity interface{}, w http.ResponseWriter) {
-	if database.GetRecord(id, entity) != nil {
-		http.Error(w, "DB error", http.StatusBadRequest)
-		return
-	}
-	json.NewEncoder(w).Encode(entity)
-	w.WriteHeader(http.StatusOK)
 }

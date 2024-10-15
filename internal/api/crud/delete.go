@@ -5,10 +5,9 @@ import (
 
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
-	"github.com/GORATOR/backend/internal/utils"
 )
 
-func Delete(entity string) http.HandlerFunc {
+func Delete[V models.Entity](entity string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var id uint
 		if !before(w, r, entity, &id) {
@@ -19,27 +18,11 @@ func Delete(entity string) http.HandlerFunc {
 			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
 			return
 		}*/
-
-		var entity = utils.EntityNameToInterface(entity)
-
-		switch entity {
-		case models.UserEntityName:
-			var user = models.User{}
-			deleteFromDb(id, &user, w)
-		case models.OrganizationEntityName:
-			var org = models.Organization{}
-			deleteFromDb(id, &org, w)
-		case models.TeamEntityName:
-			var team = models.Team{}
-			deleteFromDb(id, &team, w)
+		_, err := database.DisableRecord[V](id)
+		if err != nil {
+			http.Error(w, "DB error", http.StatusBadRequest)
+			return
 		}
+		w.WriteHeader(http.StatusOK)
 	}
-}
-
-func deleteFromDb(id uint, entity interface{}, w http.ResponseWriter) {
-	if database.DisableRecord(id, entity) != nil {
-		http.Error(w, "DB error", http.StatusBadRequest)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
 }

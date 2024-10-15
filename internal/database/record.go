@@ -1,20 +1,25 @@
 package database
 
+import "github.com/GORATOR/backend/internal/models"
+
 const (
 	activeRecordWhere = "id = ? and active = true"
 )
 
-func GetRecord(id uint, entity interface{}) error {
-	result := postgresConnection.Where(activeRecordWhere, id).First(&entity)
-	return result.Error
+func GetRecord[V models.Entity](id uint) (*V, error) {
+	var e V
+	result := postgresConnection.Where(activeRecordWhere, id).First(&e)
+	return &e, result.Error
 }
 
-func DisableRecord(id uint, entity interface{}) error {
-	result := postgresConnection.Model(&entity).Where(activeRecordWhere, id).Update("active", false)
-	return result.Error
+func DisableRecord[V models.Entity](id uint) (*V, error) {
+	var e V
+	result := postgresConnection.Model(&e).Where(activeRecordWhere, id).Update("active", false)
+	return &e, result.Error
 }
 
-func EnableRecord(id uint, entity interface{}) error {
-	result := postgresConnection.Model(&entity).Where("id = ? and active = false", id).Update("active", true)
-	return result.Error
+func EnableRecord[V models.Entity](id uint) (*V, error) {
+	var e V
+	result := postgresConnection.Model(&e).Where("id = ? and active = false", id).Update("active", true)
+	return &e, result.Error
 }
