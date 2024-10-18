@@ -7,19 +7,21 @@ import (
 
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
+	"github.com/GORATOR/backend/internal/service"
 	"github.com/GORATOR/backend/internal/utils"
 )
 
 func Update[V models.Entity](entity string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !before(w, r, entity, nil) {
+		userId, ok := before(w, r, entity, nil)
+		if !ok {
 			return
 		}
 
-		/*if !service.HasUserAccessToByUserId(id, models.ActionCreate, entityInterface) {
+		if !service.HasUserAccessToByUserId(uint(userId), models.ActionCreate, entity) {
 			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
 			return
-		}*/
+		}
 
 		body, err := utils.GetBodyBytes(r)
 		if err != nil {

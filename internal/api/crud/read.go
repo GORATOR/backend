@@ -13,11 +13,12 @@ import (
 func Read[V models.Entity](entity string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var id uint
-		if !before(w, r, entity, &id) {
+		userId, ok := before(w, r, entity, &id)
+		if !ok {
 			return
 		}
 
-		if !service.HasUserAccessToByUserId(id, models.ActionRead, entity) {
+		if !service.HasUserAccessToByUserId(uint(userId), models.ActionRead, entity) {
 			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
 			return
 		}
