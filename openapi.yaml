@@ -13,7 +13,7 @@ tags:
 security:
   - cookieAuth: []
 paths:
-  '/user/':
+  '/user':
     post:
       tags:
         - "entity"
@@ -87,6 +87,154 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
+  '/team':
+    post:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Team'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    put:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Team'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  '/team/{id}':
+    delete:
+      tags: 
+        - "entity"
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: success   
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []  
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamDetailed'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  '/organization':
+    post:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Organization'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    put:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Organization'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  '/organization/{id}':
+    delete:
+      tags: 
+        - "entity"
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: success   
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []  
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationDetailed'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error 
   '/login':
     post:
       tags:
