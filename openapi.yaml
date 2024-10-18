@@ -10,7 +10,83 @@ tags:
     description: Service API
   - name: entity
     description: Entity API (CRUD operations)
+security:
+  - cookieAuth: []
 paths:
+  '/user/':
+    post:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    put:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  '/user/{id}':
+    delete:
+      tags: 
+        - "entity"
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: success   
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []  
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailed'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
   '/login':
     post:
       tags:
@@ -29,6 +105,7 @@ paths:
               required:
                 - username
                 - password
+      security: []
       responses:
         '200':
           description: todo
@@ -41,13 +118,23 @@ paths:
                     type: string
                     description: sessionId
                   user:
-                    $ref: '#/components/schemas/UserDetailed'                
+                    $ref: '#/components/schemas/UserDetailed'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: session=abcde12345; Path=/; HttpOnly
         '400':
           description: Bad request
         '500':
           description: Internal server error
 
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
   schemas:
     User:
       type: object
