@@ -19,32 +19,32 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 
 	body, err := utils.GetBodyBytes(r)
 	if err != nil {
-		envelopeBadRequest(w)
+		utils.HttpReturnBadRequest(w)
 		return
 	}
 
 	postItems := isValidRequest(body)
 	if len(postItems) != models.EnvelopeRequiredPostItems {
-		envelopeBadRequest(w)
+		utils.HttpReturnBadRequest(w)
 		return
 	}
 
 	var commonRecord models.EnvelopeEventCommon
 	err = service.ParseSDK(&commonRecord, postItems)
 	if err != nil {
-		envelopeBadRequest(w)
+		utils.HttpReturnBadRequest(w)
 		return
 	}
 
 	if commonRecord.EventId == "" {
-		envelopeBadRequest(w)
+		utils.HttpReturnBadRequest(w)
 		return
 	}
 
 	err = database.EnvelopeSaveData(&commonRecord, postItems)
 	if err != nil {
 		fmt.Println(err)
-		envelopeBadRequest(w)
+		utils.HttpReturnBadRequest(w)
 		return
 	}
 
@@ -65,8 +65,4 @@ func isValidRequest(body []byte) []string {
 		}
 	}
 	return result
-}
-
-func envelopeBadRequest(w http.ResponseWriter) {
-	http.Error(w, "Invalid request body", http.StatusBadRequest)
 }
