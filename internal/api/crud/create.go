@@ -26,8 +26,8 @@ func Create[V models.Entity](entity string) http.HandlerFunc {
 			utils.HttpReturnBadRequest(w)
 			return
 		}
-		var jsonObject V
-		err = json.Unmarshal(body, &jsonObject)
+		var entityObject V
+		err = json.Unmarshal(body, &entityObject)
 		if err != nil {
 			fmt.Print("create json.Unmarshal error", err)
 			utils.HttpReturnBadRequest(w)
@@ -36,12 +36,12 @@ func Create[V models.Entity](entity string) http.HandlerFunc {
 
 		//filter fields
 
-		insertResult := database.GetDatabaseConnection().Create(&jsonObject)
+		insertResult := database.GetDatabaseConnection().Create(&entityObject)
 		if insertResult.Error != nil {
 			fmt.Print("create db insert error", insertResult.Error)
 			utils.HttpReturnBadRequest(w)
 			return
 		}
-		utils.HttpReturnJson(w, jsonObject)
+		utils.HttpReturnJson(w, entityObject)
 	}
 }

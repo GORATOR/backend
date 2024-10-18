@@ -149,8 +149,14 @@ func main() {
 		cors.Options{
 			AllowedOrigins:   allowedOrigins,
 			AllowCredentials: true,
-			AllowedMethods:   []string{"GET", "POST", "PUT", "OPTIONS", "DELETE"},
-			Debug:            true,
+			AllowedMethods: []string{
+				http.MethodGet,
+				http.MethodPost,
+				http.MethodPut,
+				http.MethodOptions,
+				http.MethodDelete,
+			},
+			Debug: true,
 		}).Handler(mux)
 	log.Fatal(http.ListenAndServe(":"+appPort, handler))
 }
