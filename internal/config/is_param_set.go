@@ -5,7 +5,6 @@ import (
 )
 
 const (
-	envPrefix        = "GORATOR_"
 	EnvSkipAuthCheck = "GORATOR_SKIP_AUTH_CHECK"
 )
 
