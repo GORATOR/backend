@@ -32,10 +32,13 @@ func (st RuleAction) TableName() string {
 }
 
 const (
-	Create RuleAction = "create"
-	Read   RuleAction = "read"
-	Update RuleAction = "update"
-	Delete RuleAction = "delete"
+	ActionCreate RuleAction = "create"
+	ActionRead   RuleAction = "read"
+	ActionUpdate RuleAction = "update"
+	ActionDelete RuleAction = "delete"
+
+	RuleEntityName       = "rule"
+	RuleActionEntityName = "ruleAction"
 )
 
 type Rule struct {

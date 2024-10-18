@@ -12,7 +12,9 @@
             "program": "${workspaceFolder}",
             "env": {
                "GORATOR_IS_DEBUG": "1",
-               "GORATOR_SALT": "12345"
+               "GORATOR_SALT": "12345",
+               "GORATOR_SKIP_AUTH_CHECK": "1",
+               "GORATOR_AUTH_USER_ID": "1"
             }
         }
     ]

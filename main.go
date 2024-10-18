@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/GORATOR/backend/internal/api"
+	"github.com/GORATOR/backend/internal/api/crud"
 	"github.com/GORATOR/backend/internal/config"
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
@@ -148,8 +149,14 @@ func main() {
 		cors.Options{
 			AllowedOrigins:   allowedOrigins,
 			AllowCredentials: true,
-			AllowedMethods:   []string{"GET", "POST", "PUT", "OPTIONS", "DELETE"},
-			Debug:            true,
+			AllowedMethods: []string{
+				http.MethodGet,
+				http.MethodPost,
+				http.MethodPut,
+				http.MethodOptions,
+				http.MethodDelete,
+			},
+			Debug: true,
 		}).Handler(mux)
 	log.Fatal(http.ListenAndServe(":"+appPort, handler))
 }
@@ -158,4 +165,16 @@ func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(apiPrefix+"/healthcheck", api.Healthscheck)
 	mux.HandleFunc(apiPrefix+"/api/{id}/envelope/", api.Envelope)
 	mux.HandleFunc(apiPrefix+"/login", api.Login)
+
+	setupEntityEndpoints[models.User](mux, models.UserEntityName)
+	setupEntityEndpoints[models.Organization](mux, models.OrganizationEntityName)
+	setupEntityEndpoints[models.Team](mux, models.TeamEntityName)
+
+}
+
+func setupEntityEndpoints[V models.Entity](mux *http.ServeMux, entityName string) {
+	mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPut, apiPrefix, entityName), crud.Update[V](entityName))
+	mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPost, apiPrefix, entityName), crud.Create[V](entityName))
+	mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodGet, apiPrefix, entityName), crud.Read[V](entityName))
+	mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodDelete, apiPrefix, entityName), crud.Delete[V](entityName))
 }
