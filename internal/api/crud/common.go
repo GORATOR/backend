@@ -8,10 +8,6 @@ import (
 	"github.com/GORATOR/backend/internal/api"
 )
 
-type IdBasedEntityProcessorCallback func(id uint, entity interface{}, w http.ResponseWriter)
-
-type IdBasedEntityProcessor func(id uint, entity interface{}, w http.ResponseWriter, cb IdBasedEntityProcessorCallback)
-
 func before(w http.ResponseWriter, r *http.Request, entity string, entityId *uint) bool {
 	_, userId := api.IsAuthorized(r)
 	if !(userId > 0) {
