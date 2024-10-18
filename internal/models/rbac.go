@@ -8,7 +8,7 @@ import (
 
 type Role struct {
 	gorm.Model
-	Name  string
+	Name  string  `gorm:"index:idx_name,unique"`
 	Users []*User `gorm:"many2many:role_users;"`
 	Rules []*Rule
 }

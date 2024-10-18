@@ -61,6 +61,80 @@ func tryCreateRecord(db *gorm.DB, value interface{}) {
 	}
 }
 
+type RoleRulesCallback func(db *gorm.DB, role models.Role, tableName string)
+
+func setupRole(name string, db *gorm.DB, user *models.User, cb RoleRulesCallback) {
+	role := models.Role{
+		Name:  name,
+		Users: []*models.User{user},
+	}
+	tryCreateRecord(db, &role)
+	for _, entity := range []string{
+		models.TeamEntityName,
+		models.UserEntityName,
+		models.OrganizationEntityName} {
+		cb(db, role, entity+"s")
+	}
+}
+
+func setupRoles(db *gorm.DB, user *models.User) {
+	setupRole("admin", db, user, func(db *gorm.DB, role models.Role, entity string) {
+		for _, action := range []models.RuleAction{
+			models.ActionCreate,
+			models.ActionDelete,
+			models.ActionRead,
+			models.ActionUpdate,
+		} {
+			rule := models.Rule{
+				Action:  action,
+				Table:   entity,
+				Allowed: true,
+			}
+			rule.Role = role
+			rule.RoleID = role.ID
+			db.Create(&rule)
+		}
+	})
+
+	setupRole("viewer", db, user, func(db *gorm.DB, role models.Role, entity string) {
+		rule := models.Rule{
+			Action:  models.ActionRead,
+			Table:   entity,
+			Allowed: true,
+		}
+		rule.Role = role
+		rule.RoleID = role.ID
+		db.Create(&rule)
+		for _, action := range []models.RuleAction{
+			models.ActionCreate,
+			models.ActionDelete,
+			models.ActionUpdate,
+		} {
+			rule := models.Rule{
+				Action:  action,
+				Table:   entity,
+				Allowed: false,
+			}
+			rule.Role = role
+			rule.RoleID = role.ID
+			db.Create(&rule)
+		}
+
+	})
+
+	setupRole("viewerImplicit", db, user, func(db *gorm.DB, role models.Role, entity string) {
+		rule := models.Rule{
+			Action:  models.ActionRead,
+			Table:   entity,
+			Allowed: true,
+		}
+		rule.Role = role
+		rule.RoleID = role.ID
+		db.Create(&rule)
+	})
+
+}
+
 func setupDatabase() {
 	db := database.GetDatabaseConnection()
 	err := db.AutoMigrate(
@@ -71,6 +145,7 @@ func setupDatabase() {
 		&models.Team{},
 		&models.Organization{},
 		&models.Role{},
+		&models.Rule{},
 	)
 	if err != nil {
 		panic(err)
@@ -93,7 +168,16 @@ func setupDatabase() {
 	if config.IsDebug() {
 		var userCount int64
 		db.Model(&models.User{}).Count(&userCount)
+
+		user := models.User{
+			Username: "user",
+			Email:    "user@email.com",
+			Active:   true,
+		}
+
 		if userCount > 0 {
+			db.Model(&models.User{}).Find(&user)
+			setupRoles(db, &user)
 			return
 		}
 
@@ -116,15 +200,11 @@ func setupDatabase() {
 		}
 
 		hash := utils.HashPassword("pwd", salt)
-		user := models.User{
-			Teams:         []*models.Team{&team},
-			Organizations: []*models.Organization{&org},
-			Username:      "user",
-			Password:      hash,
-			Email:         "user@email.com",
-			Active:        true,
-		}
+		user.Teams = []*models.Team{&team}
+		user.Organizations = []*models.Organization{&org}
+		user.Password = hash
 		tryCreateRecord(db, &user)
+		setupRoles(db, &user)
 	}
 }
 
