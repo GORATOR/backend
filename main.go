@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,10 +12,9 @@ import (
 	"github.com/GORATOR/backend/internal/config"
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
+	"github.com/GORATOR/backend/internal/setup"
 	"github.com/GORATOR/backend/internal/utils"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/rs/cors"
-	"gorm.io/gorm"
 )
 
 var (
@@ -43,168 +41,10 @@ func printAppMode() {
 func runCliMode() {
 	switch os.Args[1] {
 	case "-s":
-		setupDatabase()
+		setup.SetupDatabase()
 		return
 	default:
 		//todo: print help
-	}
-}
-
-func tryCreateRecord(db *gorm.DB, value interface{}) {
-	result := db.Create(value)
-	if result.Error == nil {
-		return
-	}
-	var err *pgconn.PgError
-	if errors.As(result.Error, &err) && err.Code != "23505" {
-		panic(err)
-	}
-}
-
-type RoleRulesCallback func(db *gorm.DB, role models.Role, tableName string)
-
-func setupRole(name string, db *gorm.DB, user *models.User, cb RoleRulesCallback) {
-	role := models.Role{
-		Name:  name,
-		Users: []*models.User{user},
-	}
-	tryCreateRecord(db, &role)
-	for _, entity := range []string{
-		models.TeamEntityName,
-		models.UserEntityName,
-		models.OrganizationEntityName} {
-		cb(db, role, entity+"s")
-	}
-}
-
-func setupRoles(db *gorm.DB, user *models.User) {
-	setupRole("admin", db, user, func(db *gorm.DB, role models.Role, entity string) {
-		for _, action := range []models.RuleAction{
-			models.ActionCreate,
-			models.ActionDelete,
-			models.ActionRead,
-			models.ActionUpdate,
-		} {
-			rule := models.Rule{
-				Action:  action,
-				Table:   entity,
-				Allowed: true,
-			}
-			rule.Role = role
-			rule.RoleID = role.ID
-			db.Create(&rule)
-		}
-	})
-
-	setupRole("viewer", db, user, func(db *gorm.DB, role models.Role, entity string) {
-		rule := models.Rule{
-			Action:  models.ActionRead,
-			Table:   entity,
-			Allowed: true,
-		}
-		rule.Role = role
-		rule.RoleID = role.ID
-		db.Create(&rule)
-		for _, action := range []models.RuleAction{
-			models.ActionCreate,
-			models.ActionDelete,
-			models.ActionUpdate,
-		} {
-			rule := models.Rule{
-				Action:  action,
-				Table:   entity,
-				Allowed: false,
-			}
-			rule.Role = role
-			rule.RoleID = role.ID
-			db.Create(&rule)
-		}
-
-	})
-
-	setupRole("viewerImplicit", db, user, func(db *gorm.DB, role models.Role, entity string) {
-		rule := models.Rule{
-			Action:  models.ActionRead,
-			Table:   entity,
-			Allowed: true,
-		}
-		rule.Role = role
-		rule.RoleID = role.ID
-		db.Create(&rule)
-	})
-
-}
-
-func setupDatabase() {
-	db := database.GetDatabaseConnection()
-	err := db.AutoMigrate(
-		&models.EventCommonSdk{},
-		&models.EnvelopeEventCommon{},
-		&models.EnvelopeEventExtra{},
-		&models.User{},
-		&models.Team{},
-		&models.Organization{},
-		&models.Role{},
-		&models.Rule{},
-	)
-	if err != nil {
-		panic(err)
-	}
-	uniqueIndexResult := db.Raw("CREATE UNIQUE INDEX unique_name_version ON event_common_sdks (name, version)")
-	if uniqueIndexResult.Error != nil {
-		panic(uniqueIndexResult.Error)
-	}
-	ruleActionResult := db.Debug().Exec(`
-    DO $$ BEGIN
-        CREATE TYPE public.rule_action AS ENUM ('create','read','update', 'delete');
-    EXCEPTION
-        WHEN duplicate_object THEN null;
-    END $$;`)
-	if ruleActionResult.Error != nil {
-		panic(ruleActionResult.Error)
-	}
-	tryCreateRecord(db, &models.UndefinedSdk)
-
-	if config.IsDebug() {
-		var userCount int64
-		db.Model(&models.User{}).Count(&userCount)
-
-		user := models.User{
-			Username: "user",
-			Email:    "user@email.com",
-			Active:   true,
-		}
-
-		if userCount > 0 {
-			db.Model(&models.User{}).Find(&user)
-			setupRoles(db, &user)
-			return
-		}
-
-		org := models.Organization{
-			Name:   "Test Organization",
-			Active: true,
-		}
-		tryCreateRecord(db, &org)
-
-		team := models.Team{
-			Organizations: []*models.Organization{&org},
-			Name:          "Test Team",
-			Active:        true,
-		}
-		tryCreateRecord(db, &team)
-
-		salt := utils.StringFromEnv("GORATOR_SALT", "")
-		if salt == "" {
-			log.Printf("Empty env GORATOR_SALT")
-		}
-
-		hash := utils.HashPassword("pwd", salt)
-		user.Teams = []*models.Team{&team}
-		user.Organizations = []*models.Organization{&org}
-		user.Password = hash
-		tryCreateRecord(db, &user)
-		setupRoles(db, &user)
 	}
 }
 
