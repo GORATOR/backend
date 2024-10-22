@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,10 +12,9 @@ import (
 	"github.com/GORATOR/backend/internal/config"
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
+	"github.com/GORATOR/backend/internal/setup"
 	"github.com/GORATOR/backend/internal/utils"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/rs/cors"
-	"gorm.io/gorm"
 )
 
 var (
@@ -43,88 +41,10 @@ func printAppMode() {
 func runCliMode() {
 	switch os.Args[1] {
 	case "-s":
-		setupDatabase()
+		setup.SetupDatabase()
 		return
 	default:
 		//todo: print help
-	}
-}
-
-func tryCreateRecord(db *gorm.DB, value interface{}) {
-	result := db.Create(value)
-	if result.Error == nil {
-		return
-	}
-	var err *pgconn.PgError
-	if errors.As(result.Error, &err) && err.Code != "23505" {
-		panic(err)
-	}
-}
-
-func setupDatabase() {
-	db := database.GetDatabaseConnection()
-	err := db.AutoMigrate(
-		&models.EventCommonSdk{},
-		&models.EnvelopeEventCommon{},
-		&models.EnvelopeEventExtra{},
-		&models.User{},
-		&models.Team{},
-		&models.Organization{},
-		&models.Role{},
-	)
-	if err != nil {
-		panic(err)
-	}
-	uniqueIndexResult := db.Raw("CREATE UNIQUE INDEX unique_name_version ON event_common_sdks (name, version)")
-	if uniqueIndexResult.Error != nil {
-		panic(uniqueIndexResult.Error)
-	}
-	ruleActionResult := db.Debug().Exec(`
-    DO $$ BEGIN
-        CREATE TYPE public.rule_action AS ENUM ('create','read','update', 'delete');
-    EXCEPTION
-        WHEN duplicate_object THEN null;
-    END $$;`)
-	if ruleActionResult.Error != nil {
-		panic(ruleActionResult.Error)
-	}
-	tryCreateRecord(db, &models.UndefinedSdk)
-
-	if config.IsDebug() {
-		var userCount int64
-		db.Model(&models.User{}).Count(&userCount)
-		if userCount > 0 {
-			return
-		}
-
-		org := models.Organization{
-			Name:   "Test Organization",
-			Active: true,
-		}
-		tryCreateRecord(db, &org)
-
-		team := models.Team{
-			Organizations: []*models.Organization{&org},
-			Name:          "Test Team",
-			Active:        true,
-		}
-		tryCreateRecord(db, &team)
-
-		salt := utils.StringFromEnv("GORATOR_SALT", "")
-		if salt == "" {
-			log.Printf("Empty env GORATOR_SALT")
-		}
-
-		hash := utils.HashPassword("pwd", salt)
-		user := models.User{
-			Teams:         []*models.Team{&team},
-			Organizations: []*models.Organization{&org},
-			Username:      "user",
-			Password:      hash,
-			Email:         "user@email.com",
-			Active:        true,
-		}
-		tryCreateRecord(db, &user)
 	}
 }
 

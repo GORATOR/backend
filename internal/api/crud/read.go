@@ -2,23 +2,26 @@ package crud
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
+	"github.com/GORATOR/backend/internal/service"
 )
 
 func Read[V models.Entity](entity string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var id uint
-		if !before(w, r, entity, &id) {
+		userId, ok := before(w, r, entity, &id)
+		if !ok {
 			return
 		}
 
-		/*if !service.HasUserAccessToByUserId(id, models.ActionRead, entityInterface) {
+		if !service.HasUserAccessToByUserId(uint(userId), models.ActionRead, entity) {
 			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
 			return
-		}*/
+		}
 
 		data, err := database.GetRecord[V](id)
 		if err != nil {

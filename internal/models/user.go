@@ -8,9 +8,9 @@ const (
 
 type User struct {
 	gorm.Model
-	Username      string
+	Username      string `gorm:"index:idx_username,unique"`
 	Password      string
-	Email         string
+	Email         string `gorm:"index:idx_email,unique"`
 	Avatar        string
 	Active        bool
 	Teams         []*Team         `gorm:"many2many:team_users;"`

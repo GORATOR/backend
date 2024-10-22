@@ -8,11 +8,11 @@ import (
 	"github.com/GORATOR/backend/internal/api"
 )
 
-func before(w http.ResponseWriter, r *http.Request, entity string, entityId *uint) bool {
+func before(w http.ResponseWriter, r *http.Request, entity string, entityId *uint) (int, bool) {
 	_, userId := api.IsAuthorized(r)
 	if !(userId > 0) {
 		http.Error(w, api.MessageUnauthorized, http.StatusUnauthorized)
-		return false
+		return 0, false
 	}
 	if entityId != nil {
 		id, err := strconv.Atoi(r.URL.Path[len("/"+entity+"/"):])
@@ -20,8 +20,8 @@ func before(w http.ResponseWriter, r *http.Request, entity string, entityId *uin
 		*entityId = uint(id)
 		if err != nil {
 			http.Error(w, "Invalid resource ID", http.StatusBadRequest)
-			return false
+			return userId, false
 		}
 	}
-	return true
+	return userId, true
 }
