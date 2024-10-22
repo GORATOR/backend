@@ -10,6 +10,7 @@ import (
 
 const (
 	MessageUnauthorized = "Unauthorized"
+	sessionEmpty        = ""
 )
 
 func IsAuthorized(r *http.Request) (bool, int) {
@@ -21,10 +22,19 @@ func IsAuthorized(r *http.Request) (bool, int) {
 		}
 		return true, debugUserId
 	}
-	sessionID, err := r.Cookie("session")
-	if err != nil {
+	sessionID := tryGetSessionId(r)
+	if sessionID == sessionEmpty {
 		return false, 0
 	}
-	session, err := sessionStore.GetSession(sessionID.Value)
+	session, err := sessionStore.GetSession(sessionID)
 	return session != nil && err == nil, session.UserId
+}
+
+func tryGetSessionId(r *http.Request) string {
+	sessionID, errSession := r.Cookie("session")
+	headerValue := r.Header.Get("X-Session-Id")
+	if errSession == nil && sessionID.Value != sessionEmpty {
+		return sessionID.Value
+	}
+	return headerValue
 }
