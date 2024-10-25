@@ -172,8 +172,8 @@ func SetupDatabase() {
 		}
 		tryCreateRecord(db, &team)
 
-		userAdmin := tryCreateUser(db, "userAdmin", "user1@email.com", team, org)
-		userViewer := tryCreateUser(db, "userViewer", "user2@email.com", team, org)
+		userAdmin := tryCreateUser(db, "user1@email.com", "userAdmin", team, org)
+		userViewer := tryCreateUser(db, "user2@email.com", "userViewer", team, org)
 		if userAdmin != nil && userViewer != nil {
 			setupRoles(db, userAdmin, userViewer)
 		}
