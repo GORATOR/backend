@@ -41,10 +41,13 @@ func Read[V models.Entity](entity string) http.HandlerFunc {
 	}
 }
 
-func tryGetRecords[V models.Entity](query *gorm.DB, entities *[]V) error {
+func tryGetRecords[V models.Entity](selectFields []string, query *gorm.DB, entities *[]V) error {
+	if selectFields != nil {
+		query.Select(selectFields)
+	}
 	result := query.Find(&entities)
 	if result.Error != nil {
-		fmt.Print("tryGetRecords query.Find error", result.Error)
+		fmt.Print("tryGetRecords query.Find error ", result.Error)
 		return result.Error
 	}
 	return nil
@@ -58,10 +61,8 @@ func ReadUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	var entities []models.User
 	parseUsersQuery(query, r)
-	result := query.Select("ID", "CreatedAt", "UpdatedAt", "Username", "Email", "Avatar", "Active").Find(&entities)
-
-	if result.Error != nil {
-		fmt.Print("ReadUsers query.Find error", result.Error)
+	err = tryGetRecords(models.UserSelectFields, query, &entities)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -75,7 +76,7 @@ func ReadTeams(w http.ResponseWriter, r *http.Request) {
 	}
 	var entities []models.Team
 	parseTeamsQuery(query, r)
-	err = tryGetRecords(query, &entities)
+	err = tryGetRecords(nil, query, &entities)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
