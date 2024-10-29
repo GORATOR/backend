@@ -75,7 +75,22 @@ func ReadTeams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var entities []models.Team
-	parseTeamsQuery(query, r)
+	parseNameQueryParam(query, r)
+	err = tryGetRecords(nil, query, &entities)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	utils.HttpReturnJson(w, entities)
+}
+
+func ReadOrganizations(w http.ResponseWriter, r *http.Request) {
+	query, err := buildReadQuery[models.Organization](w, r, models.OrganizationEntityName)
+	if err != nil {
+		return
+	}
+	var entities []models.Organization
+	parseNameQueryParam(query, r)
 	err = tryGetRecords(nil, query, &entities)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -91,7 +106,7 @@ func parseUsersQuery(query *gorm.DB, r *http.Request) {
 	}
 }
 
-func parseTeamsQuery(query *gorm.DB, r *http.Request) {
+func parseNameQueryParam(query *gorm.DB, r *http.Request) {
 	name := utils.GetQueryParam(r, "name")
 	if name != "" {
 		query.Where("name like ?", name+"%")
