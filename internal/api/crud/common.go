@@ -1,11 +1,17 @@
 package crud
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/GORATOR/backend/internal/api"
+	"github.com/GORATOR/backend/internal/database"
+	"github.com/GORATOR/backend/internal/models"
+	"github.com/GORATOR/backend/internal/service"
+	"github.com/GORATOR/backend/internal/utils"
+	"gorm.io/gorm"
 )
 
 func before(w http.ResponseWriter, r *http.Request, entity string, entityId *uint) (int, bool) {
@@ -24,4 +30,40 @@ func before(w http.ResponseWriter, r *http.Request, entity string, entityId *uin
 		}
 	}
 	return userId, true
+}
+
+func buildReadQuery[V models.Entity](w http.ResponseWriter, r *http.Request, entity string) (*gorm.DB, error) {
+	var entityObject V
+	query := database.GetDatabaseConnection().Model(&entityObject)
+
+	//todo: переделать
+	userId, ok := before(w, r, entity, nil)
+	if !ok {
+		return nil, errors.New("")
+	}
+
+	if !service.HasUserAccessToByUserId(uint(userId), models.ActionRead, entity) {
+		http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
+		return nil, errors.New("")
+	}
+
+	query.Where("active = true")
+
+	offset := utils.GetQueryParam(r, "offset")
+	limit := utils.GetQueryParam(r, "limit")
+
+	if limit != "" {
+		limitInt, _ := strconv.Atoi(limit)
+		query.Limit(limitInt)
+	} else {
+		query.Limit(defaultLimit)
+	}
+	if offset != "" {
+		offsetInt, _ := strconv.Atoi(offset)
+		query.Offset(offsetInt)
+	} else {
+		query.Offset(defaultOffset)
+	}
+
+	return query, nil
 }

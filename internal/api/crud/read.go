@@ -2,10 +2,8 @@ package crud
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
@@ -43,83 +41,57 @@ func Read[V models.Entity](entity string) http.HandlerFunc {
 	}
 }
 
-func getQueryParam(r *http.Request, key string) string {
-	return r.URL.Query().Get(key)
-}
-
-func tryGetRecords[V models.Entity](query *gorm.DB, w http.ResponseWriter) {
-	var entities []V
+func tryGetRecords[V models.Entity](query *gorm.DB, entities *[]V) error {
 	result := query.Find(&entities)
 	if result.Error != nil {
-		fmt.Print("GetUsers query.Find error", result.Error)
+		fmt.Print("tryGetRecords query.Find error", result.Error)
+		return result.Error
+	}
+	return nil
+}
+
+func ReadUsers(w http.ResponseWriter, r *http.Request) {
+
+	query, err := buildReadQuery[models.User](w, r, models.UserEntityName)
+	if err != nil {
+		return
+	}
+	var entities []models.User
+	parseUsersQuery(query, r)
+	result := query.Select("ID", "CreatedAt", "UpdatedAt", "Username", "Email", "Avatar", "Active").Find(&entities)
+
+	if result.Error != nil {
+		fmt.Print("ReadUsers query.Find error", result.Error)
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 	utils.HttpReturnJson(w, entities)
 }
 
-func parseOffsetAndLimit[V models.Entity](w http.ResponseWriter, r *http.Request, entity string) (*gorm.DB, error) {
-	var entityObject V
-	query := database.GetDatabaseConnection().Model(&entityObject)
-
-	//todo: переделать
-	userId, ok := before(w, r, entity, nil)
-	if !ok {
-		return nil, errors.New("")
-	}
-
-	if !service.HasUserAccessToByUserId(uint(userId), models.ActionRead, entity) {
-		http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
-		return nil, errors.New("")
-	}
-
-	offset := getQueryParam(r, "offset")
-	limit := getQueryParam(r, "limit")
-
-	if limit != "" {
-		limitInt, _ := strconv.Atoi(limit)
-		query.Limit(limitInt)
-	} else {
-		query.Limit(defaultLimit)
-	}
-	if offset != "" {
-		offsetInt, _ := strconv.Atoi(offset)
-		query.Offset(offsetInt)
-	} else {
-		query.Offset(defaultOffset)
-	}
-
-	return query, nil
-}
-
-func GetUsers[V models.Entity](w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseOffsetAndLimit[V](w, r, models.UserEntityName)
+func ReadTeams(w http.ResponseWriter, r *http.Request) {
+	query, err := buildReadQuery[models.Team](w, r, models.TeamEntityName)
 	if err != nil {
 		return
 	}
-	parseUsersQuery(query, r)
-	//todo: обработка моделей перед сериализацией
-	tryGetRecords[V](query, w)
-}
-
-func GetTeams[V models.Entity](w http.ResponseWriter, r *http.Request) {
-	query, err := parseOffsetAndLimit[V](w, r, models.TeamEntityName)
-	if err != nil {
-		return
-	}
+	var entities []models.Team
 	parseTeamsQuery(query, r)
-	tryGetRecords[V](query, w)
+	err = tryGetRecords(query, &entities)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	utils.HttpReturnJson(w, entities)
 }
 
 func parseUsersQuery(query *gorm.DB, r *http.Request) {
-	username := getQueryParam(r, "username")
+	username := utils.GetQueryParam(r, "username")
 	if username != "" {
 		query.Where("username like ?", username+"%")
 	}
 }
 
 func parseTeamsQuery(query *gorm.DB, r *http.Request) {
-	name := getQueryParam(r, "name")
+	name := utils.GetQueryParam(r, "name")
 	if name != "" {
 		query.Where("name like ?", name+"%")
 	}
