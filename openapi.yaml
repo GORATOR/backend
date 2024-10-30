@@ -345,6 +345,57 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
+  '/users/count':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityCountResponse'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  '/organizations/count':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityCountResponse'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  '/teams/count':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityCountResponse'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
   '/login':
     post:
       tags:
@@ -400,6 +451,13 @@ components:
     numberQueryParam:
       type: number
       description: schema for number parameter in url
+    EntityCountResponse:
+      type: object
+      properties:
+        entity:
+          type: string
+        count:
+          type: number
     User:
       type: object
       properties:
