@@ -90,15 +90,16 @@ func setupRouter(mux *http.ServeMux) {
 	setupEntityEndpoints[models.Organization](mux, models.OrganizationEntityName)
 	setupEntityEndpoints[models.Team](mux, models.TeamEntityName)
 
-	mux.HandleFunc("GET /user/current", api.UserCurrent)
-	mux.HandleFunc("GET /users", crud.ReadUsers)
-	mux.HandleFunc("GET /teams", crud.ReadEntities[models.Team](models.TeamEntityName))
-	mux.HandleFunc("GET /organizations", crud.ReadEntities[models.Organization](models.OrganizationEntityName))
+	mux.HandleFunc(fmt.Sprintf("GET %s/user/current", apiPrefix), api.UserCurrent)
+	mux.HandleFunc(fmt.Sprintf("GET %s/users", apiPrefix), crud.ReadUsers)
+	mux.HandleFunc(fmt.Sprintf("GET %s/teams", apiPrefix), crud.ReadEntities[models.Team](models.TeamEntityName))
+	mux.HandleFunc(fmt.Sprintf("GET %s/organizations", apiPrefix), crud.ReadEntities[models.Organization](models.OrganizationEntityName))
 }
 
 func setupEntityEndpoints[V models.Entity](mux *http.ServeMux, entityName string) {
 	mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPut, apiPrefix, entityName), crud.Update[V](entityName))
 	mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPost, apiPrefix, entityName), crud.Create[V](entityName))
 	mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodGet, apiPrefix, entityName), crud.Read[V](entityName))
+	mux.HandleFunc(fmt.Sprintf("%s %s/%s/count", http.MethodGet, apiPrefix, entityName+"s"), crud.CountEntities[V](entityName))
 	mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodDelete, apiPrefix, entityName), crud.Delete[V](entityName))
 }
