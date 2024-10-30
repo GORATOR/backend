@@ -32,19 +32,21 @@ func before(w http.ResponseWriter, r *http.Request, entity string, entityId *uin
 	return userId, true
 }
 
-func buildReadQuery[V models.Entity](w http.ResponseWriter, r *http.Request, entity string) (*gorm.DB, error) {
+func tryBuildReadQuery[V models.Entity](w http.ResponseWriter, r *http.Request, entity string) (*gorm.DB, error) {
 	var entityObject V
 	query := database.GetDatabaseConnection().Model(&entityObject)
 
-	//todo: переделать
+	forbiddenActionStr := fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead)
+
 	userId, ok := before(w, r, entity, nil)
 	if !ok {
-		return nil, errors.New("")
+		http.Error(w, forbiddenActionStr, http.StatusForbidden)
+		return nil, errors.New("can't get userId from session")
 	}
 
 	if !service.HasUserAccessToByUserId(uint(userId), models.ActionRead, entity) {
-		http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
-		return nil, errors.New("")
+		http.Error(w, forbiddenActionStr, http.StatusForbidden)
+		return nil, fmt.Errorf("user with userId=%d hasn't access to %s entity", userId, entity)
 	}
 
 	query.Where("active = true")

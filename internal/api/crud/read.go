@@ -55,7 +55,7 @@ func tryGetRecords[V models.Entity](selectFields []string, query *gorm.DB, entit
 
 func ReadUsers(w http.ResponseWriter, r *http.Request) {
 
-	query, err := buildReadQuery[models.User](w, r, models.UserEntityName)
+	query, err := tryBuildReadQuery[models.User](w, r, models.UserEntityName)
 	if err != nil {
 		return
 	}
@@ -70,7 +70,7 @@ func ReadUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadTeams(w http.ResponseWriter, r *http.Request) {
-	query, err := buildReadQuery[models.Team](w, r, models.TeamEntityName)
+	query, err := tryBuildReadQuery[models.Team](w, r, models.TeamEntityName)
 	if err != nil {
 		return
 	}
@@ -85,7 +85,7 @@ func ReadTeams(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadOrganizations(w http.ResponseWriter, r *http.Request) {
-	query, err := buildReadQuery[models.Organization](w, r, models.OrganizationEntityName)
+	query, err := tryBuildReadQuery[models.Organization](w, r, models.OrganizationEntityName)
 	if err != nil {
 		return
 	}
