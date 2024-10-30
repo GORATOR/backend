@@ -86,6 +86,42 @@ func ReadEntities[V models.Entity](entityName string) http.HandlerFunc {
 	}
 }
 
+func CountEntities[V models.Entity](entityName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var entityObject V
+		var count int64
+
+		forbiddenActionStr := fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead)
+
+		userId, ok := before(w, r, entityName, nil)
+		if !ok {
+			http.Error(w, forbiddenActionStr, http.StatusForbidden)
+			return
+		}
+
+		if !service.HasUserAccessToByUserId(uint(userId), models.ActionRead, entityName) {
+			http.Error(w, forbiddenActionStr, http.StatusForbidden)
+			return
+		}
+
+		query := database.GetDatabaseConnection().Model(&entityObject)
+		countResult := query.Count(&count)
+
+		if countResult.Error != nil {
+			fmt.Printf("CountEntities error for %s entity", entityName)
+			fmt.Print(countResult.Error)
+			http.Error(w, "", http.StatusBadRequest)
+			return
+		}
+
+		response := models.EntityCountResponse{
+			Entity: entityName,
+			Count:  count,
+		}
+		utils.HttpReturnJson(w, response)
+	}
+}
+
 func parseUsersQuery(query *gorm.DB, r *http.Request) {
 	username := utils.GetQueryParam(r, "username")
 	if username != "" {
