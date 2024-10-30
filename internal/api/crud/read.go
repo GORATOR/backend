@@ -69,34 +69,21 @@ func ReadUsers(w http.ResponseWriter, r *http.Request) {
 	utils.HttpReturnJson(w, entities)
 }
 
-func ReadTeams(w http.ResponseWriter, r *http.Request) {
-	query, err := tryBuildReadQuery[models.Team](w, r, models.TeamEntityName)
-	if err != nil {
-		return
+func ReadEntities[V models.Entity](entityName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query, err := tryBuildReadQuery[V](w, r, entityName)
+		if err != nil {
+			return
+		}
+		var entities []V
+		parseNameQueryParam(query, r)
+		err = tryGetRecords(nil, query, &entities)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		utils.HttpReturnJson(w, entities)
 	}
-	var entities []models.Team
-	parseNameQueryParam(query, r)
-	err = tryGetRecords(nil, query, &entities)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	utils.HttpReturnJson(w, entities)
-}
-
-func ReadOrganizations(w http.ResponseWriter, r *http.Request) {
-	query, err := tryBuildReadQuery[models.Organization](w, r, models.OrganizationEntityName)
-	if err != nil {
-		return
-	}
-	var entities []models.Organization
-	parseNameQueryParam(query, r)
-	err = tryGetRecords(nil, query, &entities)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	utils.HttpReturnJson(w, entities)
 }
 
 func parseUsersQuery(query *gorm.DB, r *http.Request) {
