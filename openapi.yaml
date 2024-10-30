@@ -235,6 +235,116 @@ paths:
           description: Bad request
         '500':
           description: Internal server error 
+  '/organizations':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: name
+          required: false
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+        - in: query
+          name: limit
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: offset
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrganizationDetailed'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  '/teams':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: name
+          required: false
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+        - in: query
+          name: limit
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: offset
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamDetailed'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  '/users':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: username
+          required: false
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+        - in: query
+          name: email
+          required: false
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+        - in: query
+          name: limit
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: offset
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDetailed'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
   '/login':
     post:
       tags:
@@ -284,6 +394,12 @@ components:
       in: cookie
       name: session
   schemas:
+    stringQueryParam:
+      type: string
+      description: schema for string parameter in url
+    numberQueryParam:
+      type: number
+      description: schema for number parameter in url
     User:
       type: object
       properties:
