@@ -16,7 +16,7 @@
 
 Для MVP нужно запилить следующие фичи:
 ### Бекенд
-1. Апишки для поиска по сущностям [issue 38](https://github.com/GORATOR/backend/issues/38)
+1. ~~Апишки для поиска по сущностям [issue 38](https://github.com/GORATOR/backend/issues/38)~~
 2. Добавить сущность Project (ответственна за генерацию ключа-идентификатора в envelope)
 3. Для /envelope добавить фильтрацию по ключу-идентификатору (связано с предыдущим пунктом)
 4. [issue 14](https://github.com/GORATOR/backend/issues/14)
