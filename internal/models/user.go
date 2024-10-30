@@ -6,6 +6,18 @@ const (
 	UserEntityName = "user"
 )
 
+var (
+	UserSelectFields = []string{
+		"ID",
+		"CreatedAt",
+		"UpdatedAt",
+		"Username",
+		"Email",
+		"Avatar",
+		"Active",
+	}
+)
+
 type User struct {
 	gorm.Model
 	Username      string `gorm:"index:idx_username,unique"`
