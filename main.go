@@ -76,6 +76,9 @@ func main() {
 				http.MethodOptions,
 				http.MethodDelete,
 			},
+			AllowedHeaders: []string{
+				api.SessionHeader,
+			},
 			Debug: true,
 		}).Handler(mux)
 	log.Fatal(http.ListenAndServe(":"+appPort, handler))

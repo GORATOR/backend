@@ -11,6 +11,7 @@ import (
 const (
 	MessageUnauthorized = "Unauthorized"
 	sessionEmpty        = ""
+	SessionHeader       = "X-Session-Id"
 )
 
 func IsAuthorized(r *http.Request) (bool, int) {
@@ -32,7 +33,7 @@ func IsAuthorized(r *http.Request) (bool, int) {
 
 func tryGetSessionId(r *http.Request) string {
 	sessionID, errSession := r.Cookie("session")
-	headerValue := r.Header.Get("X-Session-Id")
+	headerValue := r.Header.Get(SessionHeader)
 	if errSession == nil && sessionID.Value != sessionEmpty {
 		return sessionID.Value
 	}
