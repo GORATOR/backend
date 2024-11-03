@@ -120,7 +120,7 @@ func tryCreateUser(db *gorm.DB, email string, username string, team models.Team,
 		log.Printf("Empty env GORATOR_SALT")
 	}
 
-	user.Password = utils.HashPassword("pwd", salt)
+	user.CreateHashedPassword("pwd", salt)
 	tryCreateRecord(db, &user)
 	return &user
 }

@@ -47,3 +47,31 @@ func Create[V models.Entity](entity string) http.HandlerFunc {
 		utils.HttpReturnJson(w, entityObject)
 	}
 }
+
+func CreateProject() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userId, ok := before(w, r, models.ProjectEntityName, nil)
+		if !ok {
+			return
+		}
+
+		if !service.HasUserAccessToByUserId(uint(userId), models.ActionCreate, models.ProjectEntityName) {
+			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
+			return
+		}
+
+		body, err := utils.GetBodyBytes(r)
+		if err != nil {
+			utils.HttpReturnBadRequest(w)
+			return
+		}
+		var entityObject models.Project
+		err = json.Unmarshal(body, &entityObject)
+		if err != nil {
+			fmt.Print("create json.Unmarshal error", err)
+			utils.HttpReturnBadRequest(w)
+			return
+		}
+
+	}
+}
