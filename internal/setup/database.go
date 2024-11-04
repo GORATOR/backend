@@ -33,9 +33,9 @@ func setupRole(name string, db *gorm.DB, user *models.User, cb RoleRulesCallback
 	}
 	tryCreateRecord(db, &role)
 	for _, entity := range []string{
-		models.TeamEntityName,
-		models.UserEntityName,
-		models.OrganizationEntityName} {
+		models.TeamModelName,
+		models.UserModelName,
+		models.OrganizationModelName} {
 		cb(db, role, entity+"s")
 	}
 }

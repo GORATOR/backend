@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	ProjectEntityName = "project"
+	ProjectModelName = "project"
 )
 
 type Project struct {

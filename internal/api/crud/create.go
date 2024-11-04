@@ -50,12 +50,12 @@ func Create[V models.Model](entity string) http.HandlerFunc {
 
 func CreateProject() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userId, ok := before(w, r, models.ProjectEntityName, nil)
+		userId, ok := before(w, r, models.ProjectModelName, nil)
 		if !ok {
 			return
 		}
 
-		if !service.HasUserAccessToByUserId(uint(userId), models.ActionCreate, models.ProjectEntityName) {
+		if !service.HasUserAccessToByUserId(uint(userId), models.ActionCreate, models.ProjectModelName) {
 			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
 			return
 		}

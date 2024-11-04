@@ -3,7 +3,7 @@ package models
 import "gorm.io/gorm"
 
 const (
-	OrganizationEntityName = "organization"
+	OrganizationModelName = "organization"
 )
 
 type Organization struct {

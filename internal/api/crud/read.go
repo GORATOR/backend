@@ -55,7 +55,7 @@ func tryGetRecords[V models.Model](selectFields []string, query *gorm.DB, entiti
 
 func ReadUsers(w http.ResponseWriter, r *http.Request) {
 
-	query, err := tryBuildReadQuery[models.User](w, r, models.UserEntityName)
+	query, err := tryBuildReadQuery[models.User](w, r, models.UserModelName)
 	if err != nil {
 		return
 	}

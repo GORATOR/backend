@@ -89,15 +89,15 @@ func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(apiPrefix+"/api/{id}/envelope/", api.Envelope)
 	mux.HandleFunc(apiPrefix+"/login", api.Login)
 
-	setupEntityEndpoints[models.User](mux, models.UserEntityName)
-	setupEntityEndpoints[models.Organization](mux, models.OrganizationEntityName)
-	setupEntityEndpoints[models.Team](mux, models.TeamEntityName)
-	setupEntityEndpoints[models.Project](mux, models.ProjectEntityName)
+	setupEntityEndpoints[models.User](mux, models.UserModelName)
+	setupEntityEndpoints[models.Organization](mux, models.OrganizationModelName)
+	setupEntityEndpoints[models.Team](mux, models.TeamModelName)
+	setupEntityEndpoints[models.Project](mux, models.ProjectModelName)
 
 	mux.HandleFunc(fmt.Sprintf("GET %s/user/current", apiPrefix), api.UserCurrent)
 	mux.HandleFunc(fmt.Sprintf("GET %s/users", apiPrefix), crud.ReadUsers)
-	mux.HandleFunc(fmt.Sprintf("GET %s/teams", apiPrefix), crud.ReadEntities[models.Team](models.TeamEntityName))
-	mux.HandleFunc(fmt.Sprintf("GET %s/organizations", apiPrefix), crud.ReadEntities[models.Organization](models.OrganizationEntityName))
+	mux.HandleFunc(fmt.Sprintf("GET %s/teams", apiPrefix), crud.ReadEntities[models.Team](models.TeamModelName))
+	mux.HandleFunc(fmt.Sprintf("GET %s/organizations", apiPrefix), crud.ReadEntities[models.Organization](models.OrganizationModelName))
 }
 
 func setupEntityEndpoints[V models.Model](mux *http.ServeMux, entityName string) {

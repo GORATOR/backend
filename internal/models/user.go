@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	UserEntityName = "user"
+	UserModelName = "user"
 )
 
 var (
