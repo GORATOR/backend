@@ -37,7 +37,7 @@ func Create(m models.Model) http.HandlerFunc {
 		}
 
 		db := database.GetDatabaseConnection()
-
+		m.SetUserId(uint(userId))
 		err = m.OnCreateParseInput("Create", db, r)
 		if err != nil {
 			fmt.Println("OnCreateParseInput error ", err)
@@ -52,33 +52,5 @@ func Create(m models.Model) http.HandlerFunc {
 			return
 		}
 		utils.HttpReturnJson(w, m)
-	}
-}
-
-func CreateProject() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		userId, ok := before(w, r, models.ProjectModelName, nil)
-		if !ok {
-			return
-		}
-
-		if !service.HasUserAccessToByUserId(uint(userId), models.ActionCreate, models.ProjectModelName) {
-			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
-			return
-		}
-
-		body, err := utils.GetBodyBytes(r)
-		if err != nil {
-			utils.HttpReturnBadRequest(w)
-			return
-		}
-		var entityObject models.Project
-		err = json.Unmarshal(body, &entityObject)
-		if err != nil {
-			fmt.Print("create json.Unmarshal error", err)
-			utils.HttpReturnBadRequest(w)
-			return
-		}
-
 	}
 }

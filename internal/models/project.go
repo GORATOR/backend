@@ -21,8 +21,7 @@ type Project struct {
 	Active      bool
 	Avatar      string
 	EnvelopeKey string
-	CreatedBy   uint
-	User        User `gorm:"foreignKey:CreatedBy"`
+	CreatedByUserStruct
 }
 
 func (p *Project) GenerateEnvelopeKey() {
@@ -56,14 +55,19 @@ func (p *Project) FindAll(query *gorm.DB) (interface{}, error) {
 	return records, err
 }
 
-func (u *Project) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+func (p *Project) BeforeCreate(tx *gorm.DB) (err error) {
+	p.GenerateEnvelopeKey()
 	return nil
 }
 
-func (u *Project) OnReadParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+func (p *Project) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
 }
 
-func (u *Project) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+func (p *Project) OnReadParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+	return nil
+}
+
+func (p *Project) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
 }

@@ -23,8 +23,22 @@ var (
 	}
 )
 
+type CreatedByUser interface {
+	SetUserId(userId uint)
+}
+
+type CreatedByUserStruct struct {
+	CreatedBy uint
+	User      User `gorm:"foreignKey:CreatedBy"`
+}
+
+func (cbu *CreatedByUserStruct) SetUserId(userId uint) {
+	cbu.CreatedBy = userId
+}
+
 type User struct {
 	gorm.Model
+	CreatedBy     uint
 	Username      string `gorm:"index:idx_username,unique"`
 	Password      string
 	Email         string `gorm:"index:idx_email,unique"`
@@ -32,6 +46,10 @@ type User struct {
 	Active        bool
 	Teams         []*Team         `gorm:"many2many:team_users;"`
 	Organizations []*Organization `gorm:"many2many:org_users;"`
+}
+
+func (u *User) SetUserId(userId uint) {
+	u.CreatedBy = userId
 }
 
 func (u *User) CreateHashedPassword(plaintextPassword string, salt string) {

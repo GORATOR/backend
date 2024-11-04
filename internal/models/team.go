@@ -12,6 +12,7 @@ const (
 
 type Team struct {
 	gorm.Model
+	CreatedByUserStruct
 	Name          string
 	Avatar        string
 	Active        bool
