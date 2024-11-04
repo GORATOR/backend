@@ -1,6 +1,10 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"net/http"
+
+	"gorm.io/gorm"
+)
 
 const (
 	TeamModelName = "team"
@@ -17,4 +21,17 @@ type Team struct {
 
 func (t *Team) GetName() string {
 	return TeamModelName
+}
+
+func (t *Team) ParseInput(query *gorm.DB, r *http.Request) {
+	parseNameQueryParam(query, r)
+}
+
+func (t *Team) GetSelectFields() *[]string {
+	return nil
+}
+
+func (t *Team) FindAll(query *gorm.DB) (interface{}, error) {
+	records, err := findAll[Team](nil, query)
+	return records, err
 }

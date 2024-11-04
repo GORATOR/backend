@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/GORATOR/backend/internal/utils"
@@ -40,4 +41,17 @@ func (p *Project) GenerateEnvelopeKey() {
 
 func (p *Project) GetName() string {
 	return ProjectModelName
+}
+
+func (p *Project) ParseInput(query *gorm.DB, r *http.Request) {
+	parseNameQueryParam(query, r)
+}
+
+func (p *Project) GetSelectFields() *[]string {
+	return nil
+}
+
+func (p *Project) FindAll(query *gorm.DB) (interface{}, error) {
+	records, err := findAll[Project](nil, query)
+	return records, err
 }

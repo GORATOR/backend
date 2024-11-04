@@ -1,6 +1,8 @@
 package models
 
 import (
+	"net/http"
+
 	"github.com/GORATOR/backend/internal/utils"
 	"gorm.io/gorm"
 )
@@ -38,4 +40,17 @@ func (u *User) CreateHashedPassword(plaintextPassword string, salt string) {
 
 func (u *User) GetName() string {
 	return UserModelName
+}
+
+func (u *User) ParseInput(query *gorm.DB, r *http.Request) {
+	parseUsersQuery(query, r)
+}
+
+func (u *User) GetSelectFields() *[]string {
+	return &UserSelectFields
+}
+
+func (u *User) FindAll(query *gorm.DB) (interface{}, error) {
+	users, err := findAll[User](*u.GetSelectFields(), query)
+	return users, err
 }

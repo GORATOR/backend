@@ -95,7 +95,7 @@ func setupRouter(mux *http.ServeMux) {
 	setupEntityEndpoints(mux, &models.Project{})
 
 	mux.HandleFunc(fmt.Sprintf("GET %s/user/current", apiPrefix), api.UserCurrent)
-	mux.HandleFunc(fmt.Sprintf("GET %s/users", apiPrefix), crud.ReadUsers)
+	mux.HandleFunc(fmt.Sprintf("GET %s/users", apiPrefix), crud.ReadEntities(&models.User{}))
 	mux.HandleFunc(fmt.Sprintf("GET %s/teams", apiPrefix), crud.ReadEntities(&models.Team{}))
 	mux.HandleFunc(fmt.Sprintf("GET %s/organizations", apiPrefix), crud.ReadEntities(&models.Organization{}))
 }
