@@ -11,14 +11,14 @@ import (
 	"github.com/GORATOR/backend/internal/utils"
 )
 
-func Update[V models.Model](entity string) http.HandlerFunc {
+func Update(m models.Model) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userId, ok := before(w, r, entity, nil)
+		userId, ok := before(w, r, m.GetName(), nil)
 		if !ok {
 			return
 		}
 
-		if !service.HasUserAccessToByUserId(uint(userId), models.ActionCreate, entity) {
+		if !service.HasUserAccessToByUserId(uint(userId), models.ActionCreate, m.GetName()) {
 			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
 			return
 		}
@@ -28,8 +28,8 @@ func Update[V models.Model](entity string) http.HandlerFunc {
 			utils.HttpReturnBadRequest(w)
 			return
 		}
-		var entityObject V
-		err = json.Unmarshal(body, &entityObject)
+
+		err = json.Unmarshal(body, &m)
 		if err != nil {
 			fmt.Print("create json.Unmarshal error", err)
 			utils.HttpReturnBadRequest(w)
@@ -38,12 +38,12 @@ func Update[V models.Model](entity string) http.HandlerFunc {
 
 		//filter fields
 
-		insertResult := database.GetDatabaseConnection().Save(&entityObject)
+		insertResult := database.GetDatabaseConnection().Save(&m)
 		if insertResult.Error != nil {
 			fmt.Print("create db insert error", insertResult.Error)
 			utils.HttpReturnBadRequest(w)
 			return
 		}
-		utils.HttpReturnJson(w, entityObject)
+		utils.HttpReturnJson(w, m)
 	}
 }

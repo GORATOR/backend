@@ -14,3 +14,7 @@ type Organization struct {
 	Teams  []*Team `gorm:"many2many:org_teams;"`
 	Users  []*User `gorm:"many2many:org_users;"`
 }
+
+func (o *Organization) GetName() string {
+	return OrganizationModelName
+}

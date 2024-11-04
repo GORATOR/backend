@@ -35,3 +35,7 @@ type User struct {
 func (u *User) CreateHashedPassword(plaintextPassword string, salt string) {
 	u.Password = utils.HashPassword(plaintextPassword, salt)
 }
+
+func (u *User) GetName() string {
+	return UserModelName
+}

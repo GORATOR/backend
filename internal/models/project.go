@@ -37,3 +37,7 @@ func (p *Project) GenerateEnvelopeKey() {
 		p.EnvelopeKey = utils.GenerateMd5(data)
 	}
 }
+
+func (p *Project) GetName() string {
+	return ProjectModelName
+}

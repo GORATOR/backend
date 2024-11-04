@@ -1,10 +1,8 @@
 package models
 
 type Model interface {
-	User | Team | Organization | Project
+	GetName() string
 }
-
-//type EntityInterface interface
 
 type ModelCountResponse struct {
 	Entity string `json:"entity"`

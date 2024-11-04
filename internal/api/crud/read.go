@@ -17,20 +17,20 @@ const (
 	defaultOffset = 0
 )
 
-func Read[V models.Model](entity string) http.HandlerFunc {
+func Read(m models.Model) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var id uint
-		userId, ok := before(w, r, entity, &id)
+		userId, ok := before(w, r, m.GetName(), &id)
 		if !ok {
 			return
 		}
 
-		if !service.HasUserAccessToByUserId(uint(userId), models.ActionRead, entity) {
+		if !service.HasUserAccessToByUserId(uint(userId), models.ActionRead, m.GetName()) {
 			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
 			return
 		}
 
-		data, err := database.GetRecord[V](id)
+		data, err := database.GetRecord(id, m)
 		if err != nil {
 			http.Error(w, "DB error", http.StatusBadRequest)
 			return
@@ -41,7 +41,7 @@ func Read[V models.Model](entity string) http.HandlerFunc {
 	}
 }
 
-func tryGetRecords[V models.Model](selectFields []string, query *gorm.DB, entities *[]V) error {
+func tryGetRecords(selectFields []string, query *gorm.DB, entities *[]models.Model) error {
 	if selectFields != nil {
 		query.Select(selectFields)
 	}
@@ -55,11 +55,11 @@ func tryGetRecords[V models.Model](selectFields []string, query *gorm.DB, entiti
 
 func ReadUsers(w http.ResponseWriter, r *http.Request) {
 
-	query, err := tryBuildReadQuery[models.User](w, r, models.UserModelName)
+	query, err := tryBuildReadQuery(w, r, &models.User{})
 	if err != nil {
 		return
 	}
-	var entities []models.User
+	var entities []models.Model
 	parseUsersQuery(query, r)
 	err = tryGetRecords(models.UserSelectFields, query, &entities)
 	if err != nil {
@@ -69,13 +69,13 @@ func ReadUsers(w http.ResponseWriter, r *http.Request) {
 	utils.HttpReturnJson(w, entities)
 }
 
-func ReadEntities[V models.Model](entityName string) http.HandlerFunc {
+func ReadEntities(m models.Model) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		query, err := tryBuildReadQuery[V](w, r, entityName)
+		query, err := tryBuildReadQuery(w, r, m)
 		if err != nil {
 			return
 		}
-		var entities []V
+		var entities []models.Model
 		parseNameQueryParam(query, r)
 		err = tryGetRecords(nil, query, &entities)
 		if err != nil {
@@ -86,36 +86,35 @@ func ReadEntities[V models.Model](entityName string) http.HandlerFunc {
 	}
 }
 
-func CountEntities[V models.Model](entityName string) http.HandlerFunc {
+func CountEntities(m models.Model) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var entityObject V
 		var count int64
 
 		forbiddenActionStr := fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead)
 
-		userId, ok := before(w, r, entityName, nil)
+		userId, ok := before(w, r, m.GetName(), nil)
 		if !ok {
 			http.Error(w, forbiddenActionStr, http.StatusForbidden)
 			return
 		}
 
-		if !service.HasUserAccessToByUserId(uint(userId), models.ActionRead, entityName) {
+		if !service.HasUserAccessToByUserId(uint(userId), models.ActionRead, m.GetName()) {
 			http.Error(w, forbiddenActionStr, http.StatusForbidden)
 			return
 		}
 
-		query := database.GetDatabaseConnection().Model(&entityObject)
+		query := database.GetDatabaseConnection().Model(&m)
 		countResult := query.Count(&count)
 
 		if countResult.Error != nil {
-			fmt.Printf("CountEntities error for %s entity", entityName)
+			fmt.Printf("CountEntities error for %s entity", m.GetName())
 			fmt.Print(countResult.Error)
 			http.Error(w, "", http.StatusBadRequest)
 			return
 		}
 
 		response := models.ModelCountResponse{
-			Entity: entityName,
+			Entity: m.GetName(),
 			Count:  count,
 		}
 		utils.HttpReturnJson(w, response)

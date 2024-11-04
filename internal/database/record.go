@@ -6,20 +6,17 @@ const (
 	activeRecordWhere = "id = ? and active = true"
 )
 
-func GetRecord[V models.Model](id uint) (*V, error) {
-	var e V
-	result := postgresConnection.Where(activeRecordWhere, id).First(&e)
-	return &e, result.Error
+func GetRecord(id uint, m models.Model) (*models.Model, error) {
+	result := postgresConnection.Where(activeRecordWhere, id).First(&m)
+	return &m, result.Error
 }
 
-func DisableRecord[V models.Model](id uint) (*V, error) {
-	var e V
-	result := postgresConnection.Model(&e).Where(activeRecordWhere, id).Update("active", false)
-	return &e, result.Error
+func DisableRecord(id uint, m models.Model) (*models.Model, error) {
+	result := postgresConnection.Model(&m).Where(activeRecordWhere, id).Update("active", false)
+	return &m, result.Error
 }
 
-func EnableRecord[V models.Model](id uint) (*V, error) {
-	var e V
-	result := postgresConnection.Model(&e).Where("id = ? and active = false", id).Update("active", true)
-	return &e, result.Error
+func EnableRecord(id uint, m models.Model) (*models.Model, error) {
+	result := postgresConnection.Model(&m).Where("id = ? and active = false", id).Update("active", true)
+	return &m, result.Error
 }
