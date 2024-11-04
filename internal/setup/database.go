@@ -35,7 +35,9 @@ func setupRole(name string, db *gorm.DB, user *models.User, cb RoleRulesCallback
 	for _, entity := range []string{
 		models.TeamModelName,
 		models.UserModelName,
-		models.OrganizationModelName} {
+		models.OrganizationModelName,
+		models.ProjectModelName,
+	} {
 		cb(db, role, entity+"s")
 	}
 }
@@ -147,6 +149,7 @@ func SetupDatabase() {
 		&models.Organization{},
 		&models.Role{},
 		&models.Rule{},
+		&models.Project{},
 	)
 	if err != nil {
 		panic(err)
