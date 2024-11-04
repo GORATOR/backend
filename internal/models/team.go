@@ -23,7 +23,7 @@ func (t *Team) GetName() string {
 	return TeamModelName
 }
 
-func (t *Team) ParseInput(query *gorm.DB, r *http.Request) {
+func (t *Team) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
 	parseNameQueryParam(query, r)
 }
 

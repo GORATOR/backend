@@ -42,7 +42,7 @@ func (u *User) GetName() string {
 	return UserModelName
 }
 
-func (u *User) ParseInput(query *gorm.DB, r *http.Request) {
+func (u *User) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
 	parseUsersQuery(query, r)
 }
 

@@ -23,7 +23,7 @@ func (o *Organization) GetName() string {
 	return OrganizationModelName
 }
 
-func (o *Organization) ParseInput(query *gorm.DB, r *http.Request) {
+func (o *Organization) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
 	parseNameQueryParam(query, r)
 }
 

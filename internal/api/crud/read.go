@@ -46,7 +46,7 @@ func ReadEntities(m models.Model) http.HandlerFunc {
 		if err != nil {
 			return
 		}
-		m.ParseInput(query, r)
+		m.ParseQueryString("ReadEntities", query, r)
 		entities, err := m.FindAll(query)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)

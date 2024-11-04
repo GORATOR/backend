@@ -7,8 +7,14 @@ import (
 	"gorm.io/gorm"
 )
 
+type QueryStringParser interface {
+	ParseQueryString(endpoint string, query *gorm.DB, r *http.Request)
+}
+
 type InputParser interface {
-	ParseInput(query *gorm.DB, r *http.Request)
+	OnCreateParseInput(query *gorm.DB, r *http.Request)
+	OnReadParseInput(query *gorm.DB, r *http.Request)
+	OnUpdateParseInput(query *gorm.DB, r *http.Request)
 }
 
 func parseNameQueryParam(query *gorm.DB, r *http.Request) {

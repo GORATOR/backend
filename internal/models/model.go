@@ -11,7 +11,7 @@ type GenericModel interface {
 }
 
 type Model interface {
-	InputParser
+	QueryStringParser
 	GetSelectFields() *[]string
 	GetName() string
 	FindAll(query *gorm.DB) (interface{}, error)

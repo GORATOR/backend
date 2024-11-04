@@ -43,7 +43,7 @@ func (p *Project) GetName() string {
 	return ProjectModelName
 }
 
-func (p *Project) ParseInput(query *gorm.DB, r *http.Request) {
+func (p *Project) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
 	parseNameQueryParam(query, r)
 }
 
