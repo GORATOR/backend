@@ -12,9 +12,9 @@ type QueryStringParser interface {
 }
 
 type InputParser interface {
-	OnCreateParseInput(query *gorm.DB, r *http.Request)
-	OnReadParseInput(query *gorm.DB, r *http.Request)
-	OnUpdateParseInput(query *gorm.DB, r *http.Request)
+	OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error
+	OnReadParseInput(endpoint string, query *gorm.DB, r *http.Request) error
+	OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error
 }
 
 func parseNameQueryParam(query *gorm.DB, r *http.Request) {

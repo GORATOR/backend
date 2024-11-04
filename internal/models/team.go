@@ -35,3 +35,15 @@ func (t *Team) FindAll(query *gorm.DB) (interface{}, error) {
 	records, err := findAll[Team](nil, query)
 	return records, err
 }
+
+func (u *Team) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+	return nil
+}
+
+func (u *Team) OnReadParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+	return nil
+}
+
+func (u *Team) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+	return nil
+}

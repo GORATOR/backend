@@ -54,3 +54,15 @@ func (u *User) FindAll(query *gorm.DB) (interface{}, error) {
 	users, err := findAll[User](*u.GetSelectFields(), query)
 	return users, err
 }
+
+func (u *User) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+	return nil
+}
+
+func (u *User) OnReadParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+	return nil
+}
+
+func (u *User) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+	return nil
+}

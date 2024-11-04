@@ -36,9 +36,16 @@ func Create(m models.Model) http.HandlerFunc {
 			return
 		}
 
-		//filter fields
+		db := database.GetDatabaseConnection()
 
-		insertResult := database.GetDatabaseConnection().Create(&m)
+		err = m.OnCreateParseInput("Create", db, r)
+		if err != nil {
+			fmt.Println("OnCreateParseInput error ", err)
+			utils.HttpReturnBadRequest(w)
+			return
+		}
+
+		insertResult := db.Create(&m)
 		if insertResult.Error != nil {
 			fmt.Print("create db insert error", insertResult.Error)
 			utils.HttpReturnBadRequest(w)
