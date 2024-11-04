@@ -11,7 +11,7 @@ import (
 	"github.com/GORATOR/backend/internal/utils"
 )
 
-func Update[V models.Entity](entity string) http.HandlerFunc {
+func Update[V models.Model](entity string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userId, ok := before(w, r, entity, nil)
 		if !ok {

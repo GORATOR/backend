@@ -100,7 +100,7 @@ func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(fmt.Sprintf("GET %s/organizations", apiPrefix), crud.ReadEntities[models.Organization](models.OrganizationEntityName))
 }
 
-func setupEntityEndpoints[V models.Entity](mux *http.ServeMux, entityName string) {
+func setupEntityEndpoints[V models.Model](mux *http.ServeMux, entityName string) {
 	mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPut, apiPrefix, entityName), crud.Update[V](entityName))
 	mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPost, apiPrefix, entityName), crud.Create[V](entityName))
 	mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodGet, apiPrefix, entityName), crud.Read[V](entityName))

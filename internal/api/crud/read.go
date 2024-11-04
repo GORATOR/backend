@@ -17,7 +17,7 @@ const (
 	defaultOffset = 0
 )
 
-func Read[V models.Entity](entity string) http.HandlerFunc {
+func Read[V models.Model](entity string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var id uint
 		userId, ok := before(w, r, entity, &id)
@@ -41,7 +41,7 @@ func Read[V models.Entity](entity string) http.HandlerFunc {
 	}
 }
 
-func tryGetRecords[V models.Entity](selectFields []string, query *gorm.DB, entities *[]V) error {
+func tryGetRecords[V models.Model](selectFields []string, query *gorm.DB, entities *[]V) error {
 	if selectFields != nil {
 		query.Select(selectFields)
 	}
@@ -69,7 +69,7 @@ func ReadUsers(w http.ResponseWriter, r *http.Request) {
 	utils.HttpReturnJson(w, entities)
 }
 
-func ReadEntities[V models.Entity](entityName string) http.HandlerFunc {
+func ReadEntities[V models.Model](entityName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query, err := tryBuildReadQuery[V](w, r, entityName)
 		if err != nil {
@@ -86,7 +86,7 @@ func ReadEntities[V models.Entity](entityName string) http.HandlerFunc {
 	}
 }
 
-func CountEntities[V models.Entity](entityName string) http.HandlerFunc {
+func CountEntities[V models.Model](entityName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var entityObject V
 		var count int64
@@ -114,7 +114,7 @@ func CountEntities[V models.Entity](entityName string) http.HandlerFunc {
 			return
 		}
 
-		response := models.EntityCountResponse{
+		response := models.ModelCountResponse{
 			Entity: entityName,
 			Count:  count,
 		}

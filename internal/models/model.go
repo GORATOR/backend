@@ -1,12 +1,12 @@
 package models
 
-type Entity interface {
+type Model interface {
 	User | Team | Organization | Project
 }
 
 //type EntityInterface interface
 
-type EntityCountResponse struct {
+type ModelCountResponse struct {
 	Entity string `json:"entity"`
 	Count  int64  `json:"count"`
 }

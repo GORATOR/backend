@@ -32,7 +32,7 @@ func before(w http.ResponseWriter, r *http.Request, entity string, entityId *uin
 	return userId, true
 }
 
-func tryBuildReadQuery[V models.Entity](w http.ResponseWriter, r *http.Request, entity string) (*gorm.DB, error) {
+func tryBuildReadQuery[V models.Model](w http.ResponseWriter, r *http.Request, entity string) (*gorm.DB, error) {
 	var entityObject V
 	query := database.GetDatabaseConnection().Model(&entityObject)
 

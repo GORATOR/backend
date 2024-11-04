@@ -9,7 +9,7 @@ import (
 	"github.com/GORATOR/backend/internal/service"
 )
 
-func Delete[V models.Entity](entity string) http.HandlerFunc {
+func Delete[V models.Model](entity string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var id uint
 		userId, ok := before(w, r, entity, &id)
