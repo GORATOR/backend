@@ -37,8 +37,6 @@ func Update(m models.Model) http.HandlerFunc {
 		}
 
 		db := database.GetDatabaseConnection()
-		//m.SetUserId(uint(userId))
-		//err = m.OnCreateParseInput("Create", db, r)
 		result, err := m.UpdateModel(body, uint(userId), db)
 		if err != nil {
 			utils.HttpReturnBadRequest(w)
