@@ -17,25 +17,28 @@ type Project struct {
 	gorm.Model
 	Name        string
 	TeamId      uint
-	Team        Team `gorm:"foreignKey:TeamId"`
 	Active      bool
 	Avatar      string
 	EnvelopeKey string
 	CreatedByUserStruct
 }
 
+func (p *Project) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
+	return createModel[Project](data, tx)
+}
+
 func (p *Project) GenerateEnvelopeKey() {
 	if p.ID > 0 {
-		now := time.Now().Unix()
-		data := fmt.Sprintf(
-			"%s %s %s %d %s",
-			p.Name, p.Team.Name,
-			p.User.Username,
-			now,
-			utils.RandomString(7),
-		)
-		p.EnvelopeKey = utils.GenerateMd5(data)
+		return
 	}
+	now := time.Now().Unix()
+	data := fmt.Sprintf(
+		"%s %d %s",
+		p.Name,
+		now,
+		utils.RandomString(7),
+	)
+	p.EnvelopeKey = utils.GenerateMd5(data)
 }
 
 func (p *Project) GetName() string {

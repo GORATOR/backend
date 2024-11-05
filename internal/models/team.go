@@ -18,6 +18,11 @@ type Team struct {
 	Active        bool
 	Users         []*User         `gorm:"many2many:team_users;"`
 	Organizations []*Organization `gorm:"many2many:org_teams;"`
+	Projects      []*Project      `gorm:"foreignKey:TeamId"`
+}
+
+func (t *Team) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
+	return createModel[Team](data, tx)
 }
 
 func (t *Team) GetName() string {

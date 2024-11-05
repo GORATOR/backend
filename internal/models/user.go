@@ -29,7 +29,6 @@ type CreatedByUser interface {
 
 type CreatedByUserStruct struct {
 	CreatedBy uint
-	User      User `gorm:"foreignKey:CreatedBy"`
 }
 
 func (cbu *CreatedByUserStruct) SetUserId(userId uint) {
@@ -46,6 +45,11 @@ type User struct {
 	Active        bool
 	Teams         []*Team         `gorm:"many2many:team_users;"`
 	Organizations []*Organization `gorm:"many2many:org_users;"`
+	Projects      []*Project      `gorm:"foreignKey:CreatedBy"`
+}
+
+func (u *User) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
+	return createModel[User](data, tx)
 }
 
 func (u *User) SetUserId(userId uint) {

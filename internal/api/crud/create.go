@@ -1,7 +1,6 @@
 package crud
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -29,28 +28,14 @@ func Create(m models.Model) http.HandlerFunc {
 			return
 		}
 
-		err = json.Unmarshal(body, &m)
-		if err != nil {
-			fmt.Print("create json.Unmarshal error", err)
-			utils.HttpReturnBadRequest(w)
-			return
-		}
-
 		db := database.GetDatabaseConnection()
-		m.SetUserId(uint(userId))
-		err = m.OnCreateParseInput("Create", db, r)
+		//m.SetUserId(uint(userId))
+		//err = m.OnCreateParseInput("Create", db, r)
+		result, err := m.CreateModel(body, uint(userId), db)
 		if err != nil {
-			fmt.Println("OnCreateParseInput error ", err)
 			utils.HttpReturnBadRequest(w)
 			return
 		}
-
-		insertResult := db.Create(&m)
-		if insertResult.Error != nil {
-			fmt.Print("create db insert error", insertResult.Error)
-			utils.HttpReturnBadRequest(w)
-			return
-		}
-		utils.HttpReturnJson(w, m)
+		utils.HttpReturnJson(w, result)
 	}
 }

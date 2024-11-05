@@ -20,6 +20,10 @@ type Organization struct {
 	Users  []*User `gorm:"many2many:org_users;"`
 }
 
+func (o *Organization) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
+	return createModel[Organization](data, tx)
+}
+
 func (o *Organization) GetName() string {
 	return OrganizationModelName
 }
