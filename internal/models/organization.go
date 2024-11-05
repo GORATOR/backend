@@ -24,6 +24,10 @@ func (o *Organization) CreateModel(data []byte, userId uint, tx *gorm.DB) (inter
 	return createModel[Organization](data, tx)
 }
 
+func (o *Organization) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
+	return updateModel[Organization](data, tx)
+}
+
 func (o *Organization) GetName() string {
 	return OrganizationModelName
 }

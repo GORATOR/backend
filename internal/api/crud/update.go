@@ -36,14 +36,14 @@ func Update(m models.Model) http.HandlerFunc {
 			return
 		}
 
-		//filter fields
-
-		insertResult := database.GetDatabaseConnection().Save(&m)
-		if insertResult.Error != nil {
-			fmt.Print("create db insert error", insertResult.Error)
+		db := database.GetDatabaseConnection()
+		//m.SetUserId(uint(userId))
+		//err = m.OnCreateParseInput("Create", db, r)
+		result, err := m.UpdateModel(body, uint(userId), db)
+		if err != nil {
 			utils.HttpReturnBadRequest(w)
 			return
 		}
-		utils.HttpReturnJson(w, m)
+		utils.HttpReturnJson(w, result)
 	}
 }

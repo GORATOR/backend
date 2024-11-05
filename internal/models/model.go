@@ -13,7 +13,7 @@ type GenericModel interface {
 
 type ChangableModel interface {
 	CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error)
-	//UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error)
+	UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error)
 }
 
 type Model interface {
@@ -29,6 +29,19 @@ type Model interface {
 type ModelCountResponse struct {
 	Entity string `json:"entity"`
 	Count  int64  `json:"count"`
+}
+
+func updateModel[T GenericModel](data []byte, tx *gorm.DB) (interface{}, error) {
+	var gm T
+	err := json.Unmarshal(data, &gm)
+	if err != nil {
+		return nil, err
+	}
+	insertResult := tx.Save(&gm)
+	if insertResult.Error != nil {
+		fmt.Print("updateModel error ", insertResult.Error)
+	}
+	return gm, insertResult.Error
 }
 
 func createModel[T GenericModel](data []byte, tx *gorm.DB) (interface{}, error) {

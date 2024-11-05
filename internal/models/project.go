@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -15,16 +16,40 @@ const (
 
 type Project struct {
 	gorm.Model
-	Name        string
-	TeamId      uint
+	ProjectInput
 	Active      bool
-	Avatar      string
 	EnvelopeKey string
 	CreatedByUserStruct
 }
 
+type ProjectInput struct {
+	Name   string
+	TeamId uint
+	Avatar string
+}
+
 func (p *Project) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
-	return createModel[Project](data, tx)
+	var input ProjectInput
+	var insert Project
+	insert.SetUserId(userId)
+	err := json.Unmarshal(data, &input)
+	if err != nil {
+		fmt.Print("CreateModel json.Unmarshal error ", err)
+		return nil, err
+	}
+	insert.Avatar = input.Avatar
+	insert.Name = input.Name
+	insert.TeamId = input.TeamId
+	insert.Active = true
+	insertResult := tx.Save(&insert)
+	if insertResult.Error != nil {
+		fmt.Print("CreateModel tx.Save error ", insertResult.Error)
+	}
+	return insert, insertResult.Error
+}
+
+func (p *Project) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
+	return updateModel[Project](data, tx)
 }
 
 func (p *Project) GenerateEnvelopeKey() {

@@ -25,6 +25,10 @@ func (t *Team) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, 
 	return createModel[Team](data, tx)
 }
 
+func (t *Team) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
+	return updateModel[Team](data, tx)
+}
+
 func (t *Team) GetName() string {
 	return TeamModelName
 }

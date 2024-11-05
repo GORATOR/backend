@@ -52,6 +52,10 @@ func (u *User) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, 
 	return createModel[User](data, tx)
 }
 
+func (u *User) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
+	return updateModel[User](data, tx)
+}
+
 func (u *User) SetUserId(userId uint) {
 	u.CreatedBy = userId
 }
