@@ -206,6 +206,51 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
+  '/project':
+    post:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectInput'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    put:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectInput'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
   '/organization/{id}':
     delete:
       tags: 
@@ -231,6 +276,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrganizationDetailed'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error 
+  '/project/{id}':
+    delete:
+      tags: 
+        - "entity"
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: success   
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []  
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'                
         '400':
           description: Bad request
         '500':
@@ -301,6 +375,46 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TeamDetailed'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  '/projects':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: name
+          required: false
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+        - in: query
+          name: limit
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: offset
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: teamId
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrganizationDetailed'                
         '400':
           description: Bad request
         '500':
@@ -469,6 +583,30 @@ components:
           type: string
         active:
           type: boolean
+    Project:
+      type: object
+      properties:
+        name:
+          type: string
+        teamId:
+          type: number
+        avatar:
+          type: string
+        active: 
+          type: boolean
+        envelopeKey:
+          type: string
+        createdBy:
+          type: number
+    ProjectInput:
+      type: object
+      properties:
+        name:
+          type: string
+        teamId:
+          type: number
+        avatar:
+          type: string
     UserDetailed:
       type: object
       properties:
