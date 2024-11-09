@@ -78,6 +78,7 @@ func main() {
 			},
 			AllowedHeaders: []string{
 				api.SessionHeader,
+				"content-type",
 			},
 			Debug: true,
 		}).Handler(mux)
