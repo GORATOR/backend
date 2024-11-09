@@ -49,7 +49,21 @@ func (p *Project) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{
 }
 
 func (p *Project) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
-	return updateModel[Project](data, tx)
+	var project Project
+	err := json.Unmarshal(data, &project)
+	if err != nil {
+		return nil, err
+	}
+	updates := map[string]interface{}{"name": project.Name, "avatar": project.Avatar}
+	insertResult := tx.Model(&Project{}).Where("active = ? and id = ?", true, project.ID).Updates(updates)
+	if insertResult.Error != nil {
+		fmt.Print("updateModel error ", insertResult.Error)
+	}
+	tx.Model(&project).Where("active = ? and id = ?", true, project.ID).Find(&project)
+	if insertResult.Error != nil {
+		fmt.Print("after updateModel (find) error ", insertResult.Error)
+	}
+	return project, insertResult.Error
 }
 
 func (p *Project) GenerateEnvelopeKey() {
