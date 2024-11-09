@@ -1,16 +1,59 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"net/http"
+
+	"gorm.io/gorm"
+)
 
 const (
-	TeamEntityName = "team"
+	TeamModelName = "team"
 )
 
 type Team struct {
 	gorm.Model
+	CreatedByUserStruct
 	Name          string
 	Avatar        string
 	Active        bool
 	Users         []*User         `gorm:"many2many:team_users;"`
 	Organizations []*Organization `gorm:"many2many:org_teams;"`
+	Projects      []*Project      `gorm:"foreignKey:TeamId"`
+}
+
+func (t *Team) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
+	return createModel[Team](data, tx)
+}
+
+func (t *Team) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
+	return updateModel[Team](data, tx)
+}
+
+func (t *Team) GetName() string {
+	return TeamModelName
+}
+
+func (t *Team) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
+	parseNameQueryParam(query, r)
+}
+
+func (t *Team) GetSelectFields() *[]string {
+	return nil
+}
+
+func (t *Team) FindAll(query *gorm.DB) (interface{}, error) {
+	records, err := findAll[Team](nil, query)
+	return records, err
+}
+
+func (u *Team) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+	return nil
+}
+
+func (u *Team) OnReadParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+	return nil
+}
+
+func (u *Team) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+	return nil
 }

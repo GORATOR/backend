@@ -16,7 +16,7 @@ func UserCurrent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := database.GetRecord[models.User](uint(userId))
+	user, err := database.GetRecord(uint(userId), &models.User{})
 	if err != nil {
 		fmt.Print("database.GetRecord[models.User] error", err)
 		http.Error(w, "Invalid resource ID", http.StatusBadRequest)

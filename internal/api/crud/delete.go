@@ -9,19 +9,19 @@ import (
 	"github.com/GORATOR/backend/internal/service"
 )
 
-func Delete[V models.Entity](entity string) http.HandlerFunc {
+func Delete(m models.Model) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var id uint
-		userId, ok := before(w, r, entity, &id)
+		userId, ok := before(w, r, m.GetName(), &id)
 		if !ok {
 			return
 		}
 
-		if !service.HasUserAccessToByUserId(uint(userId), models.ActionDelete, entity) {
+		if !service.HasUserAccessToByUserId(uint(userId), models.ActionDelete, m.GetName()) {
 			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
 			return
 		}
-		_, err := database.DisableRecord[V](id)
+		_, err := database.DisableRecord(id, m)
 		if err != nil {
 			http.Error(w, "DB error", http.StatusBadRequest)
 			return
