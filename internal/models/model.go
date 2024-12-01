@@ -79,19 +79,17 @@ func bindModelToRelatedModels(
 	relatedIDs []uint,
 ) string {
 
-	if len(relatedIDs) > 0 {
-		for _, relatedModelId := range relatedIDs {
-			query := fmt.Sprintf(
-				"INSERT INTO %s_%ss (%s_id, %s_id) VALUES (?, ?)",
-				getModelNameAlias(modelName),
-				relatedModelName,
-				modelName,
-				relatedModelName,
-			)
-			teamBindResult := tx.Exec(query, modelId, relatedModelId)
-			if teamBindResult.Error != nil {
-				fmt.Printf("Bind new %s to %s with id %d error: %s", modelName, relatedModelName, modelId, teamBindResult.Error)
-			}
+	for _, relatedModelId := range relatedIDs {
+		query := fmt.Sprintf(
+			"INSERT INTO %s_%ss (%s_id, %s_id) VALUES (?, ?)",
+			getModelNameAlias(modelName),
+			relatedModelName,
+			modelName,
+			relatedModelName,
+		)
+		teamBindResult := tx.Exec(query, modelId, relatedModelId)
+		if teamBindResult.Error != nil {
+			fmt.Printf("Bind new %s to %s with id %d error: %s", modelName, relatedModelName, modelId, teamBindResult.Error)
 		}
 	}
 	if relatedModelName == "org" {
@@ -108,19 +106,17 @@ func bindRelatedModelsToModel(
 	relatedIDs []uint,
 ) string {
 
-	if len(relatedIDs) > 0 {
-		for _, relatedModelId := range relatedIDs {
-			query := fmt.Sprintf(
-				"INSERT INTO %s_%ss (%s_id, %s_id) VALUES (?, ?)",
-				getModelNameAlias(relatedModelName),
-				modelName,
-				relatedModelName,
-				modelName,
-			)
-			teamBindResult := tx.Exec(query, relatedModelId, modelId)
-			if teamBindResult.Error != nil {
-				fmt.Printf("Bind new %s to %s with id %d error: %s", modelName, relatedModelName, modelId, teamBindResult.Error)
-			}
+	for _, relatedModelId := range relatedIDs {
+		query := fmt.Sprintf(
+			"INSERT INTO %s_%ss (%s_id, %s_id) VALUES (?, ?)",
+			getModelNameAlias(relatedModelName),
+			modelName,
+			relatedModelName,
+			modelName,
+		)
+		teamBindResult := tx.Exec(query, relatedModelId, modelId)
+		if teamBindResult.Error != nil {
+			fmt.Printf("Bind new %s to %s with id %d error: %s", modelName, relatedModelName, modelId, teamBindResult.Error)
 		}
 	}
 	if relatedModelName == "org" {

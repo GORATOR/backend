@@ -74,11 +74,7 @@ func (u *User) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, 
 	user.Avatar = input.Avatar
 	user.Username = input.Username
 	user.Email = input.Email
-	salt := utils.StringFromEnv("GORATOR_SALT", "")
-	if salt == "" {
-		fmt.Printf("Empty salt!")
-	}
-	user.Password = utils.HashPassword(input.Password, salt)
+	user.SetPassword(input.Password)
 
 	insertError := tx.Transaction(func(tx *gorm.DB) error {
 		insertResult := tx.Save(&user)
@@ -86,29 +82,34 @@ func (u *User) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, 
 			fmt.Print("CreateModel tx.Save error ", insertResult.Error)
 			return insertResult.Error
 		}
-		var teams []*Team
-		tx.Model(&user).Association(
-			bindRelatedModelsToModel(
-				tx,
-				UserModelName,
-				TeamModelName,
-				user.ID,
-				input.TeamIds,
-			),
-		).Find(&teams)
-		user.Teams = teams
 
-		var orgs []*Organization
-		tx.Model(&user).Omit("password").Association(
-			bindRelatedModelsToModel(
-				tx,
-				UserModelName,
-				OrganizationModelName,
-				user.ID,
-				input.OrganizationIds,
-			),
-		).Find(&orgs)
-		user.Organizations = orgs
+		if len(input.TeamIds) > 0 {
+			var teams []*Team
+			tx.Model(&user).Association(
+				bindRelatedModelsToModel(
+					tx,
+					UserModelName,
+					TeamModelName,
+					user.ID,
+					input.TeamIds,
+				),
+			).Find(&teams)
+			user.Teams = teams
+		}
+
+		if len(input.OrganizationIds) > 0 {
+			var orgs []*Organization
+			tx.Model(&user).Association(
+				bindRelatedModelsToModel(
+					tx,
+					UserModelName,
+					OrganizationModelName,
+					user.ID,
+					input.OrganizationIds,
+				),
+			).Find(&orgs)
+			user.Organizations = orgs
+		}
 
 		return nil
 	})
@@ -119,11 +120,86 @@ func (u *User) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, 
 }
 
 func (u *User) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
-	return updateModel[User](data, tx)
+	var input UserInput
+	var user User
+	err := json.Unmarshal(data, &input)
+	if err != nil {
+		return nil, err
+	}
+	user.SetPassword(input.Password)
+	updates := map[string]interface{}{
+		"username": input.Username,
+		"avatar":   input.Avatar,
+		"password": user.Password,
+	}
+	updateError := tx.Transaction(func(tx *gorm.DB) error {
+		updateResult := tx.Model(&User{}).Where("active = ? and id = ?", true, input.ID).Updates(updates)
+		if updateResult.Error != nil {
+			fmt.Printf("update user with id %d error %s", input.ID, updateResult.Error)
+			return updateResult.Error
+		}
+		if updateResult.RowsAffected == 0 {
+			fmt.Printf("update user RowsAffected = 0")
+			return fmt.Errorf("no active users with id = %d", input.ID)
+		}
+
+		findResult := tx.Model(&user).Where("active = ? and id = ?", true, input.ID).Find(&user)
+		if findResult.Error != nil {
+			fmt.Print("after updateModel (find) error ", findResult.Error)
+			return findResult.Error
+		}
+
+		tx.Exec("DELETE FROM org_users WHERE user_id = ?", input.ID)
+		if len(input.TeamIds) > 0 {
+			var orgs []*Organization
+			tx.Model(&user).Association(
+				bindRelatedModelsToModel(
+					tx,
+					UserModelName,
+					OrganizationModelName,
+					user.ID,
+					input.OrganizationIds,
+				),
+			).Find(&orgs)
+			user.Organizations = orgs
+		}
+
+		tx.Exec("DELETE FROM team_users WHERE user_id = ?", input.ID)
+		if len(input.OrganizationIds) > 0 {
+			var teams []*Team
+			tx.Model(&user).Association(
+				bindRelatedModelsToModel(
+					tx,
+					UserModelName,
+					TeamModelName,
+					user.ID,
+					input.TeamIds,
+				),
+			).Find(&teams)
+			user.Teams = teams
+		}
+		return nil
+	})
+
+	if updateError != nil {
+		return nil, updateError
+	}
+
+	user.Password = ""
+
+	return user, updateError
 }
 
 func (u *User) SetUserId(userId uint) {
 	u.CreatedBy = userId
+}
+
+func (u *User) SetPassword(plainText string) {
+	salt := utils.StringFromEnv("GORATOR_SALT", "")
+	if salt == "" {
+		fmt.Printf("Empty salt!")
+	}
+	u.CreateHashedPassword(plainText, salt)
 }
 
 func (u *User) CreateHashedPassword(plaintextPassword string, salt string) {

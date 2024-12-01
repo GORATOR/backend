@@ -50,29 +50,33 @@ func (o *Organization) CreateModel(data []byte, userId uint, tx *gorm.DB) (inter
 			return insertResult.Error
 		}
 
-		var teams []*Team
-		tx.Model(&org).Association(
-			bindModelToRelatedModels(
-				tx,
-				OrganizationModelName,
-				TeamModelName,
-				org.ID,
-				input.TeamIds,
-			),
-		).Find(&teams)
-		org.Teams = teams
+		if len(input.TeamIds) > 0 {
+			var teams []*Team
+			tx.Model(&org).Association(
+				bindModelToRelatedModels(
+					tx,
+					OrganizationModelName,
+					TeamModelName,
+					org.ID,
+					input.TeamIds,
+				),
+			).Find(&teams)
+			org.Teams = teams
+		}
 
-		var users []*User
-		tx.Model(&org).Omit("password").Association(
-			bindModelToRelatedModels(
-				tx,
-				OrganizationModelName,
-				UserModelName,
-				org.ID,
-				input.UserIds,
-			),
-		).Find(&users)
-		org.Users = users
+		if len(input.UserIds) > 0 {
+			var users []*User
+			tx.Model(&org).Omit("password").Association(
+				bindModelToRelatedModels(
+					tx,
+					OrganizationModelName,
+					UserModelName,
+					org.ID,
+					input.UserIds,
+				),
+			).Find(&users)
+			org.Users = users
+		}
 
 		return nil
 	})
@@ -94,6 +98,10 @@ func (o *Organization) UpdateModel(data []byte, userId uint, tx *gorm.DB) (inter
 			fmt.Printf("update organization with id %d error %s", input.ID, updateResult.Error)
 			return updateResult.Error
 		}
+		if updateResult.RowsAffected == 0 {
+			fmt.Printf("update organization RowsAffected = 0")
+			return fmt.Errorf("no active organizations with id = %d", input.ID)
+		}
 
 		findResult := tx.Model(&org).Where("active = ? and id = ?", true, input.ID).Find(&org)
 		if findResult.Error != nil {
@@ -101,31 +109,33 @@ func (o *Organization) UpdateModel(data []byte, userId uint, tx *gorm.DB) (inter
 			return findResult.Error
 		}
 
+		tx.Exec("DELETE FROM org_teams WHERE organization_id = ?", input.ID)
 		if len(input.TeamIds) > 0 {
-			tx.Exec("DELETE FROM org_teams WHERE organization_id = ?", input.ID)
-			for _, teamId := range input.TeamIds {
-				teamBindResult := tx.Exec("INSERT INTO org_teams (organization_id, team_id) VALUES (?, ?)", input.ID, teamId)
-				if teamBindResult.Error != nil {
-					fmt.Printf("Bind new team to organization with id %d error: %s", input.ID, teamBindResult.Error)
-				}
-			}
-
 			var teams []*Team
-			tx.Model(&org).Omit("password").Association("Teams").Find(&teams)
+			tx.Model(&org).Association(
+				bindModelToRelatedModels(
+					tx,
+					OrganizationModelName,
+					TeamModelName,
+					org.ID,
+					input.TeamIds,
+				),
+			).Find(&teams)
 			org.Teams = teams
 		}
 
+		tx.Exec("DELETE FROM org_users WHERE organization_id = ?", input.ID)
 		if len(input.UserIds) > 0 {
-			tx.Exec("DELETE FROM org_users WHERE organization_id = ?", input.ID)
-			for _, userId := range input.UserIds {
-				userBindResult := tx.Exec("INSERT INTO org_users (organization_id, user_id) VALUES (?, ?)", input.ID, userId)
-				if userBindResult.Error != nil {
-					fmt.Printf("Bind new user to organization with id %d error: %s", input.ID, userBindResult.Error)
-				}
-			}
-
 			var users []*User
-			tx.Model(&org).Association("Users").Find(&users)
+			tx.Model(&org).Omit("password").Association(
+				bindModelToRelatedModels(
+					tx,
+					OrganizationModelName,
+					UserModelName,
+					org.ID,
+					input.UserIds,
+				),
+			).Find(&users)
 			org.Users = users
 		}
 		return nil
