@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -68,4 +69,69 @@ func findAll[T GenericModel](selectFields []string, query *gorm.DB) (interface{}
 		return nil, result.Error
 	}
 	return records, nil
+}
+
+func bindModelToRelatedModels(
+	tx *gorm.DB,
+	modelName string,
+	relatedModelName string,
+	modelId uint,
+	relatedIDs []uint,
+) string {
+
+	if len(relatedIDs) > 0 {
+		for _, relatedModelId := range relatedIDs {
+			query := fmt.Sprintf(
+				"INSERT INTO %s_%ss (%s_id, %s_id) VALUES (?, ?)",
+				getModelNameAlias(modelName),
+				relatedModelName,
+				modelName,
+				relatedModelName,
+			)
+			teamBindResult := tx.Exec(query, modelId, relatedModelId)
+			if teamBindResult.Error != nil {
+				fmt.Printf("Bind new %s to %s with id %d error: %s", modelName, relatedModelName, modelId, teamBindResult.Error)
+			}
+		}
+	}
+	if relatedModelName == "org" {
+		return OrganizationModelName
+	}
+	return strings.Title(relatedModelName) + "s"
+}
+
+func bindRelatedModelsToModel(
+	tx *gorm.DB,
+	modelName string,
+	relatedModelName string,
+	modelId uint,
+	relatedIDs []uint,
+) string {
+
+	if len(relatedIDs) > 0 {
+		for _, relatedModelId := range relatedIDs {
+			query := fmt.Sprintf(
+				"INSERT INTO %s_%ss (%s_id, %s_id) VALUES (?, ?)",
+				getModelNameAlias(relatedModelName),
+				modelName,
+				relatedModelName,
+				modelName,
+			)
+			teamBindResult := tx.Exec(query, relatedModelId, modelId)
+			if teamBindResult.Error != nil {
+				fmt.Printf("Bind new %s to %s with id %d error: %s", modelName, relatedModelName, modelId, teamBindResult.Error)
+			}
+		}
+	}
+	if relatedModelName == "org" {
+		return OrganizationModelName
+	}
+	return strings.Title(relatedModelName) + "s"
+}
+
+func getModelNameAlias(relatedModelName string) string {
+	if relatedModelName == OrganizationModelName {
+		return "org"
+	}
+	return relatedModelName
 }

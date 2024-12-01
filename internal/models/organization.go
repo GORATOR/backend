@@ -49,30 +49,31 @@ func (o *Organization) CreateModel(data []byte, userId uint, tx *gorm.DB) (inter
 			fmt.Print("CreateModel tx.Save error ", insertResult.Error)
 			return insertResult.Error
 		}
-		if len(input.TeamIds) > 0 {
-			for _, teamId := range input.TeamIds {
-				teamBindResult := tx.Exec("INSERT INTO org_teams (organization_id, team_id) VALUES (?, ?)", org.ID, teamId)
-				if teamBindResult.Error != nil {
-					fmt.Printf("Bind new team to organization with id %d error: %s", org.ID, teamBindResult.Error)
-				}
-			}
 
-			var teams []*Team
-			tx.Model(&org).Association("Teams").Find(&teams)
-			org.Teams = teams
-		}
-		if len(input.UserIds) > 0 {
-			for _, userId := range input.UserIds {
-				userBindResult := tx.Exec("INSERT INTO org_users (organization_id, user_id) VALUES (?, ?)", org.ID, userId)
-				if userBindResult.Error != nil {
-					fmt.Printf("Bind new user to organization with id %d error: %s", org.ID, userBindResult.Error)
-				}
-			}
+		var teams []*Team
+		tx.Model(&org).Association(
+			bindModelToRelatedModels(
+				tx,
+				OrganizationModelName,
+				TeamModelName,
+				org.ID,
+				input.TeamIds,
+			),
+		).Find(&teams)
+		org.Teams = teams
 
-			var users []*User
-			tx.Model(&org).Omit("password").Association("Users").Find(&users)
-			org.Users = users
-		}
+		var users []*User
+		tx.Model(&org).Omit("password").Association(
+			bindModelToRelatedModels(
+				tx,
+				OrganizationModelName,
+				UserModelName,
+				org.ID,
+				input.UserIds,
+			),
+		).Find(&users)
+		org.Users = users
+
 		return nil
 	})
 

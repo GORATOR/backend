@@ -1,6 +1,8 @@
 package models
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/GORATOR/backend/internal/utils"
@@ -48,8 +50,72 @@ type User struct {
 	Projects      []*Project      `gorm:"foreignKey:CreatedBy"`
 }
 
+type UserInput struct {
+	ID              uint
+	Username        string
+	Password        string
+	Email           string
+	Avatar          string
+	TeamIds         []uint
+	OrganizationIds []uint
+	ProjectIds      []uint
+}
+
 func (u *User) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
-	return createModel[User](data, tx)
+	var input UserInput
+	var user User
+	user.CreatedBy = userId
+	err := json.Unmarshal(data, &input)
+	if err != nil {
+		fmt.Print("CreateModel json.Unmarshal error ", err)
+		return nil, err
+	}
+	user.Active = true
+	user.Avatar = input.Avatar
+	user.Username = input.Username
+	user.Email = input.Email
+	salt := utils.StringFromEnv("GORATOR_SALT", "")
+	if salt == "" {
+		fmt.Printf("Empty salt!")
+	}
+	user.Password = utils.HashPassword(input.Password, salt)
+
+	insertError := tx.Transaction(func(tx *gorm.DB) error {
+		insertResult := tx.Save(&user)
+		if insertResult.Error != nil {
+			fmt.Print("CreateModel tx.Save error ", insertResult.Error)
+			return insertResult.Error
+		}
+		var teams []*Team
+		tx.Model(&user).Association(
+			bindRelatedModelsToModel(
+				tx,
+				UserModelName,
+				TeamModelName,
+				user.ID,
+				input.TeamIds,
+			),
+		).Find(&teams)
+		user.Teams = teams
+
+		var orgs []*Organization
+		tx.Model(&user).Omit("password").Association(
+			bindRelatedModelsToModel(
+				tx,
+				UserModelName,
+				OrganizationModelName,
+				user.ID,
+				input.OrganizationIds,
+			),
+		).Find(&orgs)
+		user.Organizations = orgs
+
+		return nil
+	})
+
+	user.Password = ""
+
+	return user, insertError
 }
 
 func (u *User) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
