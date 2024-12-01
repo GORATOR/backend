@@ -148,7 +148,7 @@ func (t *Team) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, 
 			tx.Model(&team).Omit("password").Association(
 				bindModelToRelatedModels(
 					tx,
-					OrganizationModelName,
+					TeamModelName,
 					UserModelName,
 					team.ID,
 					input.UserIds,
