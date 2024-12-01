@@ -24,14 +24,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/UserInput'
       responses:
         '200':
           description: todo
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'                
+                $ref: '#/components/schemas/UserDetailed'                
         '400':
           description: Bad request
         '500':
@@ -46,14 +46,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/UserInput'
       responses:
         '200':
           description: todo
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'                
+                $ref: '#/components/schemas/UserDetailed'                
         '400':
           description: Bad request
         '500':
@@ -98,14 +98,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Team'
+              $ref: '#/components/schemas/TeamInput'
       responses:
         '200':
           description: todo
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Team'                
+                $ref: '#/components/schemas/TeamDetailed'                
         '400':
           description: Bad request
         '500':
@@ -120,14 +120,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Team'
+              $ref: '#/components/schemas/TeamInput'
       responses:
         '200':
           description: todo
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Team'                
+                $ref: '#/components/schemas/TeamDetailed'                
         '400':
           description: Bad request
         '500':
@@ -172,14 +172,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Organization'
+              $ref: '#/components/schemas/OrganizationInput'
       responses:
         '200':
           description: todo
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Organization'                
+                $ref: '#/components/schemas/OrganizationDetailed'                
         '400':
           description: Bad request
         '500':
@@ -194,14 +194,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Organization'
+              $ref: '#/components/schemas/OrganizationInput'
       responses:
         '200':
           description: todo
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Organization'                
+                $ref: '#/components/schemas/OrganizationDetailed'                
         '400':
           description: Bad request
         '500':
@@ -572,6 +572,31 @@ components:
           type: string
         count:
           type: number
+    UserInput:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        avatar:
+          type: string
+        active:
+          type: boolean
+        password:
+          type: string
+        teamIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+        organizationIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
     User:
       type: object
       properties:
@@ -580,6 +605,8 @@ components:
         email:
           type: string
         avatar:
+          type: string
+        password:
           type: string
         active:
           type: boolean
@@ -616,16 +643,18 @@ components:
           type: string
         avatar:
           type: string
+        password:
+          type: string
         active:
           type: boolean
         teams:
           type: array
           items:
-            $ref: '#/components/schemas/Team'
+            $ref: '#/components/schemas/TeamDetailed'
         organizations:
           type: array
           items:
-            $ref: '#/components/schemas/Organization'
+            $ref: '#/components/schemas/OrganizationDetailed'
     Team:
       type: object
       properties:
@@ -635,9 +664,35 @@ components:
           type: string
         active:
           type: boolean
+    TeamInput:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        avatar:
+          type: string
+        userIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+        projectIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+        organizationIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
     TeamDetailed:
       type: object
       properties:
+        id:
+          type: integer
         name:
           type: string
         avatar:
@@ -647,11 +702,15 @@ components:
         users:
           type: array
           items:
-            $ref: '#/components/schemas/User'
+            $ref: '#/components/schemas/UserDetailed'
         organizations:
           type: array
           items:
-            $ref: '#/components/schemas/Organization'
+            $ref: '#/components/schemas/OrganizationDetailed'
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
     Organization:
       type: object
       properties:
@@ -661,6 +720,25 @@ components:
           type: string
         active:
           type: boolean
+    OrganizationInput:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        avatar:
+          type: string
+        teamIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+        userIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
     OrganizationDetailed:
       type: object
       properties:
