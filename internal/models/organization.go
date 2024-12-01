@@ -1,6 +1,8 @@
 package models
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -20,12 +22,130 @@ type Organization struct {
 	Users  []*User `gorm:"many2many:org_users;"`
 }
 
+type OrganizationInput struct {
+	ID      uint
+	Name    string
+	Avatar  string
+	TeamIds []uint
+	UserIds []uint
+}
+
 func (o *Organization) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
-	return createModel[Organization](data, tx)
+	var input OrganizationInput
+	var org Organization
+	org.SetUserId(userId)
+	err := json.Unmarshal(data, &input)
+	if err != nil {
+		fmt.Print("CreateModel json.Unmarshal error ", err)
+		return nil, err
+	}
+	org.Active = true
+	org.Avatar = input.Avatar
+	org.Name = input.Name
+
+	insertError := tx.Transaction(func(tx *gorm.DB) error {
+		insertResult := tx.Save(&org)
+		if insertResult.Error != nil {
+			fmt.Print("CreateModel tx.Save error ", insertResult.Error)
+			return insertResult.Error
+		}
+
+		if len(input.TeamIds) > 0 {
+			var teams []*Team
+			tx.Model(&org).Association(
+				bindModelToRelatedModels(
+					tx,
+					OrganizationModelName,
+					TeamModelName,
+					org.ID,
+					input.TeamIds,
+				),
+			).Find(&teams)
+			org.Teams = teams
+		}
+
+		if len(input.UserIds) > 0 {
+			var users []*User
+			tx.Model(&org).Omit("password").Association(
+				bindModelToRelatedModels(
+					tx,
+					OrganizationModelName,
+					UserModelName,
+					org.ID,
+					input.UserIds,
+				),
+			).Find(&users)
+			org.Users = users
+		}
+
+		return nil
+	})
+
+	return org, insertError
 }
 
 func (o *Organization) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
-	return updateModel[Organization](data, tx)
+	var input OrganizationInput
+	var org Organization
+	err := json.Unmarshal(data, &input)
+	if err != nil {
+		return nil, err
+	}
+	updates := map[string]interface{}{"name": input.Name, "avatar": input.Avatar}
+	updateError := tx.Transaction(func(tx *gorm.DB) error {
+		updateResult := tx.Model(&Organization{}).Where("active = ? and id = ?", true, input.ID).Updates(updates)
+		if updateResult.Error != nil {
+			fmt.Printf("update organization with id %d error %s", input.ID, updateResult.Error)
+			return updateResult.Error
+		}
+		if updateResult.RowsAffected == 0 {
+			fmt.Printf("update organization RowsAffected = 0")
+			return fmt.Errorf("no active organizations with id = %d", input.ID)
+		}
+
+		findResult := tx.Model(&org).Where("active = ? and id = ?", true, input.ID).Find(&org)
+		if findResult.Error != nil {
+			fmt.Print("after updateModel (find) error ", findResult.Error)
+			return findResult.Error
+		}
+
+		tx.Exec("DELETE FROM org_teams WHERE organization_id = ?", input.ID)
+		if len(input.TeamIds) > 0 {
+			var teams []*Team
+			tx.Model(&org).Association(
+				bindModelToRelatedModels(
+					tx,
+					OrganizationModelName,
+					TeamModelName,
+					org.ID,
+					input.TeamIds,
+				),
+			).Find(&teams)
+			org.Teams = teams
+		}
+
+		tx.Exec("DELETE FROM org_users WHERE organization_id = ?", input.ID)
+		if len(input.UserIds) > 0 {
+			var users []*User
+			tx.Model(&org).Omit("password").Association(
+				bindModelToRelatedModels(
+					tx,
+					OrganizationModelName,
+					UserModelName,
+					org.ID,
+					input.UserIds,
+				),
+			).Find(&users)
+			org.Users = users
+		}
+		return nil
+	})
+
+	if updateError != nil {
+		return nil, updateError
+	}
+
+	return org, updateError
 }
 
 func (o *Organization) GetName() string {
