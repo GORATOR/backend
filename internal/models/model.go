@@ -18,13 +18,25 @@ type ChangableModel interface {
 }
 
 type Model interface {
+	ReadableModel
+	WritebleModel
+}
+
+type ReadableModel interface {
+	ModelCommon
 	QueryStringParser
-	InputParser
+	FindAll(query *gorm.DB) (interface{}, error)
+}
+
+type WritebleModel interface {
+	ModelCommon
 	CreatedByUser
 	ChangableModel
-	GetSelectFields() *[]string
+}
+
+type ModelCommon interface {
 	GetName() string
-	FindAll(query *gorm.DB) (interface{}, error)
+	GetSelectFields() *[]string
 }
 
 type ModelCountResponse struct {

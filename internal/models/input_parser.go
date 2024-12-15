@@ -19,20 +19,22 @@ type InputParser interface {
 }
 
 func parseNameQueryParam(query *gorm.DB, r *http.Request) {
-	name := utils.GetQueryParam(r, "name")
+	/*name := utils.GetQueryParam(r, "name")
 	if name != "" {
 		query.Where("name like ?", name+"%")
-	}
+	}*/
+	parseQueryParam(query, r, "name", "like")
 }
 
 func parseUsersQuery(query *gorm.DB, r *http.Request) {
-	username := utils.GetQueryParam(r, "username")
+	/*username := utils.GetQueryParam(r, "username")
 	if username != "" {
 		query.Where("username like ?", username+"%")
-	}
+	}*/
+	parseQueryParam(query, r, "username", "like")
 }
 
-func parseNumberQueryParam(query *gorm.DB, r *http.Request, paramName string, sign string) {
+func parseQueryParam(query *gorm.DB, r *http.Request, paramName string, sign string) {
 	param := utils.GetQueryParam(r, paramName)
 	if param != "" {
 		query.Where(fmt.Sprintf("%s %s ?", paramName, sign), param)

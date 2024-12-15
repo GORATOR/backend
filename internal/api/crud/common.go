@@ -32,7 +32,7 @@ func before(w http.ResponseWriter, r *http.Request, entity string, entityId *uin
 	return userId, true
 }
 
-func tryBuildReadQuery(w http.ResponseWriter, r *http.Request, m models.Model) (*gorm.DB, error) {
+func tryBuildReadQuery(w http.ResponseWriter, r *http.Request, m models.ReadableModel) (*gorm.DB, error) {
 	query := database.GetDatabaseConnection().Model(&m)
 
 	forbiddenActionStr := fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead)

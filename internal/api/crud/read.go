@@ -16,7 +16,7 @@ const (
 	defaultOffset = 0
 )
 
-func Read(m models.Model) http.HandlerFunc {
+func Read(m models.ReadableModel) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var id uint
 		userId, ok := before(w, r, m.GetName(), &id)
@@ -40,7 +40,7 @@ func Read(m models.Model) http.HandlerFunc {
 	}
 }
 
-func ReadEntities(m models.Model) http.HandlerFunc {
+func ReadEntities(m models.ReadableModel) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query, err := tryBuildReadQuery(w, r, m)
 		if err != nil {
@@ -56,7 +56,7 @@ func ReadEntities(m models.Model) http.HandlerFunc {
 	}
 }
 
-func CountEntities(m models.Model) http.HandlerFunc {
+func CountEntities(m models.ReadableModel) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var count int64
 
