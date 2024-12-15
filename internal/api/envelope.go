@@ -41,6 +41,12 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = commonRecord.TryExtractKeyFromDsn()
+	if err != nil {
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
 	err = database.EnvelopeSaveData(&commonRecord, postItems)
 	if err != nil {
 		fmt.Println(err)
