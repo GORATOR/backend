@@ -129,10 +129,10 @@ func (e *EnvelopeEventCommon) GetSelectFields() *[]string {
 }
 
 func (e *EnvelopeEventCommon) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
-	parseQueryParam(query, r, "project_id", "project_id", "=")
-	parseQueryParam(query, r, "created_at_from", "created_at", ">=")
-	parseQueryParam(query, r, "created_at_to", "created_at", "<=")
+	parseQueryParam(query, r, "projectId", "project_id", "=")
+	parseQueryParam(query, r, "createdAtFrom", "created_at", ">=")
+	parseQueryParam(query, r, "createdAtTo", "created_at", "<=")
 
-	parseQueryParamIn(query, r, "user_id", "project_id IN ?", getUserProjectIDs)
-	parseQueryParamIn(query, r, "team_id", "project_id IN ?", getTeamProjectIDs)
+	parseQueryParamIn(query, r, "userId", "project_id IN ?", getUserProjectIDs)
+	parseQueryParamIn(query, r, "teamId", "project_id IN ?", getTeamProjectIDs)
 }
