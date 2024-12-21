@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -23,25 +24,34 @@ const (
 	EnvelopeKeyWrongHeaderError = "wrong X-Sentry-Auth header format"
 )
 
+type EnvelopeModel struct {
+	ID        uint           `gorm:"primarykey" json:"-"`
+	CreatedAt time.Time      `json:"-"`
+	UpdatedAt time.Time      `json:"-"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
 type EnvelopeResponse struct {
 	Id string `json:"id"`
 }
 
 type EventCommonSdk struct {
-	gorm.Model
+	EnvelopeModel
 	Name    string `json:"name"`
 	Version string `json:"version"`
 }
 
 type EnvelopeEventCommon struct {
-	gorm.Model
+	EnvelopeModel
 	EventId             string         `json:"event_id"`
 	SentAt              string         `json:"sent_at"`
 	DSN                 string         `json:"dsn"`
 	EventCommonSdk      EventCommonSdk `json:"sdk"`
-	EventCommonSdkID    uint
+	EventCommonSdkID    uint           `json:"-"`
 	EnvelopeEventExtras []EnvelopeEventExtra
-	EnvelopeKey         string
+	EnvelopeKey         string `json:"-"`
+	Project             Project
+	ProjectID           uint
 }
 
 type EnvelopeRequestType struct {
@@ -50,7 +60,7 @@ type EnvelopeRequestType struct {
 }
 
 type EnvelopeEventExtra struct {
-	gorm.Model
+	EnvelopeModel
 	Data                  string
 	EnvelopeEventCommonID uint
 }

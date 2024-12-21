@@ -74,6 +74,8 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	commonRecord.ProjectID = project.ID
+
 	err = database.EnvelopeSaveData(&commonRecord, postItems)
 	if err != nil {
 		fmt.Println(err)
