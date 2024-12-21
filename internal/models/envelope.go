@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GORATOR/backend/internal/utils"
 	"gorm.io/gorm"
 )
 
@@ -133,14 +132,7 @@ func (e *EnvelopeEventCommon) ParseQueryString(endpoint string, query *gorm.DB, 
 	parseQueryParam(query, r, "project_id", "project_id", "=")
 	parseQueryParam(query, r, "created_at_from", "created_at", ">=")
 	parseQueryParam(query, r, "created_at_to", "created_at", "<=")
-	userId := utils.GetQueryParam(r, "user_id")
-	if userId != "" {
-		//todo: п3 Доступные пользователю (пользователь связан с проектом, а конверты с проектом)
-		// найти все проекты, которые связаны с командами, в которые добавлен user_id, использовать в in их project_id
-	}
-	teamId := utils.GetQueryParam(r, "team_id")
-	if teamId != "" {
-		//todo: п4 Доступные команде (проект связан с командой , а конверты с проектом)
-		// найти все проекты, которые связаны с командой, использовать в in их project_id
-	}
+
+	parseQueryParamIn(query, r, "user_id", "project_id IN ?", getUserProjectIDs)
+	parseQueryParamIn(query, r, "team_id", "project_id IN ?", getTeamProjectIDs)
 }
