@@ -37,6 +37,7 @@ func setupRole(name string, db *gorm.DB, user *models.User, cb RoleRulesCallback
 		models.UserModelName,
 		models.OrganizationModelName,
 		models.ProjectModelName,
+		models.EnvelopeEventCommonModelName,
 	} {
 		cb(db, role, entity+"s")
 	}
@@ -156,6 +157,11 @@ func SetupDatabase() {
 	}
 	uniqueIndexResult := db.Raw("CREATE UNIQUE INDEX unique_name_version ON event_common_sdks (name, version)")
 	if uniqueIndexResult.Error != nil {
+		panic(uniqueIndexResult.Error)
+	}
+
+	envelopeKeyIndexResult := db.Raw("CREATE UNIQUE INDEX unique_envelope_key ON projects (envelope_key)")
+	if envelopeKeyIndexResult.Error != nil {
 		panic(uniqueIndexResult.Error)
 	}
 

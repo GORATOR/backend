@@ -6,7 +6,7 @@ const (
 	activeRecordWhere = "id = ? and active = true"
 )
 
-func GetRecord(id uint, m models.Model) (*models.Model, error) {
+func GetRecord(id uint, m models.ReadableModel) (*models.ReadableModel, error) {
 	result := postgresConnection.Where(activeRecordWhere, id).First(&m)
 	return &m, result.Error
 }

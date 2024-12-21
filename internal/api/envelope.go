@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/GORATOR/backend/internal/database"
@@ -41,6 +42,40 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = commonRecord.TryExtractKeyFromDsn()
+	if err != nil {
+		fmt.Print(err)
+		err = commonRecord.TryExtractKeyFromHeaders(r)
+		if err != nil {
+			utils.HttpReturnBadRequest(w)
+			return
+		}
+	}
+
+	projectId := tryParseProjectId(r)
+	if projectId == 0 {
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	project := models.Project{}
+	projectResult := database.GetDatabaseConnection().
+		Where("id = ? and active = true", projectId).
+		First(&project)
+	if projectResult.Error != nil {
+		fmt.Print(projectResult.Error)
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	if project.EnvelopeKey != commonRecord.EnvelopeKey {
+		fmt.Print(err)
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	commonRecord.ProjectID = project.ID
+
 	err = database.EnvelopeSaveData(&commonRecord, postItems)
 	if err != nil {
 		fmt.Println(err)
@@ -65,4 +100,13 @@ func isValidRequest(body []byte) []string {
 		}
 	}
 	return result
+}
+
+func tryParseProjectId(r *http.Request) uint {
+	projectId := r.PathValue("id")
+	projectIdUint, err := strconv.ParseUint(projectId, 10, 32)
+	if err != nil {
+		return 0
+	}
+	return uint(projectIdUint)
 }

@@ -86,7 +86,8 @@ func (p *Project) GetName() string {
 
 func (p *Project) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
 	parseNameQueryParam(query, r)
-	parseNumberQueryParam(query, r, "teamId", "=")
+	param := "teamId"
+	parseQueryParam(query, r, param, param, "=")
 }
 
 func (p *Project) GetSelectFields() *[]string {
@@ -113,4 +114,31 @@ func (p *Project) OnReadParseInput(endpoint string, query *gorm.DB, r *http.Requ
 
 func (p *Project) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
+}
+
+func getTeamProjectIDs(teamId uint, db *gorm.DB) ([]uint, error) {
+	result := []uint{}
+	if teamId == 0 {
+		return []uint{}, nil
+	}
+	query := `select p.id from teams t
+left join projects p on p.team_id = t.id and t.id = ?
+where p.id is not null`
+
+	resultError := db.Raw(query, teamId).Find(&result)
+	return result, resultError.Error
+}
+
+func getUserProjectIDs(userId uint, db *gorm.DB) ([]uint, error) {
+	result := []uint{}
+	if userId == 0 {
+		return []uint{}, nil
+	}
+	query := `select p.id from teams t
+left join team_users tu on tu.team_id = t.id and tu.user_id = ?
+left join projects p on p.team_id = t.id and t.id is not null
+where p.id is not null`
+
+	resultError := db.Raw(query, userId).Find(&result)
+	return result, resultError.Error
 }

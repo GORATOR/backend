@@ -379,6 +379,65 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
+  '/envelopes':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          description: default 10
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: offset
+          required: false
+          description: default 0
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: teamId
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam' 
+        - in: query
+          name: projectId
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: userId
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: createdAtFrom
+          required: false
+          description: data with url encoded special chars, for example 2024-12-21\%2020:00:00\%20%2b0300
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+        - in: query
+          name: createdAtTo
+          required: false
+          description: data with url encoded special chars, for example 2024-12-21\%2020:00:00\%20%2b0300
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Envelopes'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error   
   '/projects':
     get:
       tags:
@@ -756,3 +815,42 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Team'
+    Envelopes:
+      type: array
+      items:
+        $ref: '#/components/schemas/Envelope'
+    EnvelopeEventExtra:
+      type: object
+      properties:
+        Data:
+          type: string
+        EnvelopeEventCommonID:
+          type: integer
+    EnvelopeSDK:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+    Envelope:
+      type: object
+      properties:
+        EnvelopeEventExtras:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvelopeEventExtra'
+        Project:
+          type: object
+          $ref: '#/components/schemas/Project'
+        ProjectID:
+          type: integer
+        dsn:
+          type: string
+        event_id:
+          type: string
+        sdk:
+          type: object
+          $ref: '#/components/schemas/EnvelopeSDK'
+        sent_at:
+          type: string

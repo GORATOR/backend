@@ -18,23 +18,49 @@ type InputParser interface {
 	OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error
 }
 
+type inSelectFunc func(id uint, db *gorm.DB) ([]uint, error)
+
 func parseNameQueryParam(query *gorm.DB, r *http.Request) {
-	name := utils.GetQueryParam(r, "name")
-	if name != "" {
-		query.Where("name like ?", name+"%")
-	}
+	param := "name"
+	parseQueryParam(query, r, param, param, "like")
 }
 
 func parseUsersQuery(query *gorm.DB, r *http.Request) {
-	username := utils.GetQueryParam(r, "username")
-	if username != "" {
-		query.Where("username like ?", username+"%")
+	param := "username"
+	parseQueryParam(query, r, param, param, "like")
+}
+
+func parseQueryParam(
+	query *gorm.DB,
+	r *http.Request,
+	urlParamName string,
+	dbParamName string,
+	sign string,
+) {
+	param := utils.GetQueryParam(r, urlParamName)
+	if param != "" {
+		query.Where(fmt.Sprintf("%s %s ?", dbParamName, sign), param)
 	}
 }
 
-func parseNumberQueryParam(query *gorm.DB, r *http.Request, paramName string, sign string) {
-	param := utils.GetQueryParam(r, paramName)
-	if param != "" {
-		query.Where(fmt.Sprintf("%s %s ?", paramName, sign), param)
+func parseQueryParamIn(
+	query *gorm.DB,
+	r *http.Request,
+	urlParamName string,
+	inQuerySql string,
+	selectFunc inSelectFunc,
+) {
+	id := utils.GetQueryParam(r, urlParamName)
+	if id == "" {
+		return
+	}
+	userIdUint, err := utils.StrToUint(id)
+	if err != nil {
+		return
+	}
+
+	ids, _ := selectFunc(userIdUint, query)
+	if len(ids) > 0 {
+		query.Where(inQuerySql, ids)
 	}
 }
