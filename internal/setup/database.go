@@ -37,6 +37,7 @@ func setupRole(name string, db *gorm.DB, user *models.User, cb RoleRulesCallback
 		models.UserModelName,
 		models.OrganizationModelName,
 		models.ProjectModelName,
+		models.EnvelopeEventCommonModelName,
 	} {
 		cb(db, role, entity+"s")
 	}

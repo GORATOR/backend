@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GORATOR/backend/internal/utils"
 	"gorm.io/gorm"
 )
 
@@ -19,9 +20,10 @@ const (
 	EnvelopePostItemType    = 1
 	EnvelopePostItemMessage = 2
 
-	EnvelopeRequiredPostItems   = 3
-	EnvelopeKeyFormatError      = "wrong DSN format (%s instead of something like http://KEY@DOMAIN:PORT/2)"
-	EnvelopeKeyWrongHeaderError = "wrong X-Sentry-Auth header format"
+	EnvelopeRequiredPostItems    = 3
+	EnvelopeKeyFormatError       = "wrong DSN format (%s instead of something like http://KEY@DOMAIN:PORT/2)"
+	EnvelopeKeyWrongHeaderError  = "wrong X-Sentry-Auth header format"
+	EnvelopeEventCommonModelName = "envelope_event_common"
 )
 
 type EnvelopeModel struct {
@@ -102,13 +104,25 @@ func (e *EnvelopeEventCommon) TryExtractKeyFromHeaders(r *http.Request) error {
 }
 
 func (e *EnvelopeEventCommon) FindAll(query *gorm.DB) (interface{}, error) {
-
-	return nil, nil
-
+	var records []EnvelopeEventCommon
+	result := query.Find(&records)
+	if result.Error != nil {
+		fmt.Print("tryGetRecords query.Find error ", result.Error)
+		return nil, result.Error
+	}
+	if len(records) == 0 {
+		return records, nil
+	}
+	query.
+		Preload("EventCommonSdk").
+		Preload("EnvelopeEventExtras").
+		Preload("Project").
+		Find(&records)
+	return records, nil
 }
 
 func (e *EnvelopeEventCommon) GetName() string {
-	return "envelope_event_common"
+	return EnvelopeEventCommonModelName
 }
 
 func (e *EnvelopeEventCommon) GetSelectFields() *[]string {
@@ -116,8 +130,17 @@ func (e *EnvelopeEventCommon) GetSelectFields() *[]string {
 }
 
 func (e *EnvelopeEventCommon) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
-	parseQueryParam(query, r, "envelope_key", "=")
-	parseQueryParam(query, r, "project_name", "like")
-	parseQueryParam(query, r, "created_at_from", ">=")
-	parseQueryParam(query, r, "created_at_to", "<=")
+	parseQueryParam(query, r, "project_id", "project_id", "=")
+	parseQueryParam(query, r, "created_at_from", "created_at", ">=")
+	parseQueryParam(query, r, "created_at_to", "created_at", "<=")
+	userId := utils.GetQueryParam(r, "user_id")
+	if userId != "" {
+		//todo: п3 Доступные пользователю (пользователь связан с проектом, а конверты с проектом)
+		// найти все проекты, которые связаны с командами, в которые добавлен user_id, использовать в in их project_id
+	}
+	teamId := utils.GetQueryParam(r, "team_id")
+	if teamId != "" {
+		//todo: п4 Доступные команде (проект связан с командой , а конверты с проектом)
+		// найти все проекты, которые связаны с командой, использовать в in их project_id
+	}
 }

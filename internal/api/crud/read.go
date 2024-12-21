@@ -40,9 +40,9 @@ func Read(m models.ReadableModel) http.HandlerFunc {
 	}
 }
 
-func ReadEntities(m models.ReadableModel) http.HandlerFunc {
+func ReadEntities(m models.ReadableModel, ignoreActive bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		query, err := tryBuildReadQuery(w, r, m)
+		query, err := tryBuildReadQuery(w, r, m, ignoreActive)
 		if err != nil {
 			return
 		}

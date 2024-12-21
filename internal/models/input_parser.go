@@ -23,7 +23,8 @@ func parseNameQueryParam(query *gorm.DB, r *http.Request) {
 	if name != "" {
 		query.Where("name like ?", name+"%")
 	}*/
-	parseQueryParam(query, r, "name", "like")
+	param := "name"
+	parseQueryParam(query, r, param, param, "like")
 }
 
 func parseUsersQuery(query *gorm.DB, r *http.Request) {
@@ -31,12 +32,13 @@ func parseUsersQuery(query *gorm.DB, r *http.Request) {
 	if username != "" {
 		query.Where("username like ?", username+"%")
 	}*/
-	parseQueryParam(query, r, "username", "like")
+	param := "username"
+	parseQueryParam(query, r, param, param, "like")
 }
 
-func parseQueryParam(query *gorm.DB, r *http.Request, paramName string, sign string) {
-	param := utils.GetQueryParam(r, paramName)
+func parseQueryParam(query *gorm.DB, r *http.Request, urlParamName string, dbParamName string, sign string) {
+	param := utils.GetQueryParam(r, urlParamName)
 	if param != "" {
-		query.Where(fmt.Sprintf("%s %s ?", paramName, sign), param)
+		query.Where(fmt.Sprintf("%s %s ?", dbParamName, sign), param)
 	}
 }

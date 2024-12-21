@@ -32,7 +32,7 @@ func before(w http.ResponseWriter, r *http.Request, entity string, entityId *uin
 	return userId, true
 }
 
-func tryBuildReadQuery(w http.ResponseWriter, r *http.Request, m models.ReadableModel) (*gorm.DB, error) {
+func tryBuildReadQuery(w http.ResponseWriter, r *http.Request, m models.ReadableModel, ignoreActive bool) (*gorm.DB, error) {
 	query := database.GetDatabaseConnection().Model(&m)
 
 	forbiddenActionStr := fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead)
@@ -48,7 +48,9 @@ func tryBuildReadQuery(w http.ResponseWriter, r *http.Request, m models.Readable
 		return nil, fmt.Errorf("user with userId=%d hasn't access to %s entity", userId, m.GetName())
 	}
 
-	query.Where("active = true")
+	if ignoreActive != true {
+		query.Where("active = true")
+	}
 
 	offset := utils.GetQueryParam(r, "offset")
 	limit := utils.GetQueryParam(r, "limit")

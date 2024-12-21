@@ -86,7 +86,8 @@ func (p *Project) GetName() string {
 
 func (p *Project) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
 	parseNameQueryParam(query, r)
-	parseQueryParam(query, r, "teamId", "=")
+	param := "teamId"
+	parseQueryParam(query, r, param, param, "=")
 }
 
 func (p *Project) GetSelectFields() *[]string {
