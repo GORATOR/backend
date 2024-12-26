@@ -42,14 +42,10 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = commonRecord.TryExtractKeyFromDsn()
+	err = commonRecord.TryExtractKey(r)
 	if err != nil {
-		fmt.Print(err)
-		err = commonRecord.TryExtractKeyFromHeaders(r)
-		if err != nil {
-			utils.HttpReturnBadRequest(w)
-			return
-		}
+		utils.HttpReturnBadRequest(w)
+		return
 	}
 
 	projectId := tryParseProjectId(r)

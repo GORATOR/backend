@@ -102,6 +102,29 @@ func (e *EnvelopeEventCommon) TryExtractKeyFromHeaders(r *http.Request) error {
 	return fmt.Errorf(EnvelopeKeyWrongHeaderError)
 }
 
+func (e *EnvelopeEventCommon) TryExtractKeyFromUri(r *http.Request) error {
+	queryParams := r.URL.Query()
+	if !queryParams.Has("sentry_key") {
+		return fmt.Errorf("empty DSN")
+	}
+	e.EnvelopeKey = queryParams.Get("sentry_key")
+	return nil
+}
+
+func (e *EnvelopeEventCommon) TryExtractKey(r *http.Request) error {
+	err := e.TryExtractKeyFromDsn()
+	if err == nil {
+		return nil
+	}
+	err = e.TryExtractKeyFromHeaders(r)
+	if err == nil {
+		return nil
+	}
+	err = e.TryExtractKeyFromUri(r)
+
+	return err
+}
+
 func (e *EnvelopeEventCommon) FindAll(query *gorm.DB) (interface{}, error) {
 	var records []EnvelopeEventCommon
 	result := query.Find(&records)
