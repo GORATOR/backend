@@ -29,7 +29,7 @@ func Read(m models.ReadableModel) http.HandlerFunc {
 			return
 		}
 
-		data, err := database.GetRecord(id, m)
+		data, err := m.ReadById(database.GetDatabaseConnection(), id)
 		if err != nil {
 			http.Error(w, "DB error", http.StatusBadRequest)
 			return

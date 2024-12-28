@@ -143,6 +143,15 @@ func (e *EnvelopeEventCommon) FindAll(query *gorm.DB) (interface{}, error) {
 	return records, nil
 }
 
+func (e *EnvelopeEventCommon) ReadById(db *gorm.DB, id uint) (interface{}, error) {
+	result := db.Where("id = ? and active = true", id).
+		Preload("EventCommonSdk").
+		Preload("EnvelopeEventExtras").
+		Preload("Project").
+		First(&e)
+	return e, result.Error
+}
+
 func (e *EnvelopeEventCommon) GetName() string {
 	return EnvelopeEventCommonModelName
 }

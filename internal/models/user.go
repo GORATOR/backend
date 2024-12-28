@@ -223,6 +223,10 @@ func (u *User) FindAll(query *gorm.DB) (interface{}, error) {
 	return users, err
 }
 
+func (u *User) ReadById(db *gorm.DB, id uint) (interface{}, error) {
+	return readById(db, id, u)
+}
+
 func (u *User) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
 }

@@ -26,6 +26,7 @@ type ReadableModel interface {
 	ModelCommon
 	QueryStringParser
 	FindAll(query *gorm.DB) (interface{}, error)
+	ReadById(db *gorm.DB, id uint) (interface{}, error)
 }
 
 type WritebleModel interface {
@@ -81,6 +82,11 @@ func findAll[T GenericModel](selectFields []string, query *gorm.DB) (interface{}
 		return nil, result.Error
 	}
 	return records, nil
+}
+
+func readById(db *gorm.DB, id uint, m ReadableModel) (interface{}, error) {
+	result := db.Where("id = ? and active = true", id).First(&m)
+	return &m, result.Error
 }
 
 func bindModelToRelatedModels(
