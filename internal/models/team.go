@@ -198,6 +198,10 @@ func (t *Team) ReadById(db *gorm.DB, id uint) (interface{}, error) {
 	return readById(db, id, t)
 }
 
+func (Team) GetAliases() []string {
+	return []string{}
+}
+
 func (u *Team) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
 }

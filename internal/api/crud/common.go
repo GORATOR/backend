@@ -14,22 +14,54 @@ import (
 	"gorm.io/gorm"
 )
 
-func before(w http.ResponseWriter, r *http.Request, entity string, entityId *uint) (int, bool) {
+func before(w http.ResponseWriter, r *http.Request, m models.ReadableModel, entityId *uint) (int, bool) {
 	_, userId := api.IsAuthorized(r)
 	if !(userId > 0) {
 		http.Error(w, api.MessageUnauthorized, http.StatusUnauthorized)
 		return 0, false
 	}
 	if entityId != nil {
-		id, err := strconv.Atoi(r.URL.Path[len("/"+entity+"/"):])
 		fmt.Println(entityId)
-		*entityId = uint(id)
+		id, err := extractIdFromUrl(m, r.URL.Path)
 		if err != nil {
-			http.Error(w, "Invalid resource ID", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return userId, false
 		}
+		*entityId = id
 	}
 	return userId, true
+}
+
+func extractIdFromUrl(m models.ReadableModel, path string) (uint, error) {
+	entity := m.GetName()
+	searchStr := "/" + entity + "/"
+	if len(path) < len(searchStr) {
+		for _, alias := range m.GetAliases() {
+			searchStr = "/" + alias + "/"
+			if len(path) < len(searchStr) {
+				continue
+			}
+			id, err := strconv.Atoi(path[len("/"+alias+"/"):])
+			if err == nil {
+				return uint(id), nil
+			}
+		}
+		return 0, fmt.Errorf("")
+	}
+	id, err := strconv.Atoi(path[len(searchStr):])
+	if err != nil {
+		for _, alias := range m.GetAliases() {
+			searchStr = "/" + alias + "/"
+			if len(path) < len(searchStr) {
+				continue
+			}
+			id, err = strconv.Atoi(path[len("/"+alias+"/"):])
+			if err == nil {
+				return uint(id), nil
+			}
+		}
+	}
+	return uint(id), fmt.Errorf("")
 }
 
 func tryBuildReadQuery(w http.ResponseWriter, r *http.Request, m models.ReadableModel, ignoreActive bool) (*gorm.DB, error) {
@@ -37,7 +69,7 @@ func tryBuildReadQuery(w http.ResponseWriter, r *http.Request, m models.Readable
 
 	forbiddenActionStr := fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead)
 
-	userId, ok := before(w, r, m.GetName(), nil)
+	userId, ok := before(w, r, m, nil)
 	if !ok {
 		http.Error(w, forbiddenActionStr, http.StatusForbidden)
 		return nil, errors.New("can't get userId from session")

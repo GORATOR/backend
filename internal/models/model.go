@@ -37,6 +37,7 @@ type WritebleModel interface {
 
 type ModelCommon interface {
 	GetName() string
+	GetAliases() []string
 	GetSelectFields() *[]string
 }
 

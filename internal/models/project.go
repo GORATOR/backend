@@ -108,6 +108,10 @@ func (p *Project) BeforeCreate(tx *gorm.DB) (err error) {
 	return nil
 }
 
+func (Project) GetAliases() []string {
+	return []string{}
+}
+
 func (p *Project) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
 }

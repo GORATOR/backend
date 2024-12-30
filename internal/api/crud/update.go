@@ -13,7 +13,7 @@ import (
 
 func Update(m models.Model) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userId, ok := before(w, r, m.GetName(), nil)
+		userId, ok := before(w, r, m, nil)
 		if !ok {
 			return
 		}
