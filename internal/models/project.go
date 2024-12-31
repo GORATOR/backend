@@ -99,9 +99,17 @@ func (p *Project) FindAll(query *gorm.DB) (interface{}, error) {
 	return records, err
 }
 
+func (p *Project) ReadById(db *gorm.DB, id uint) (interface{}, error) {
+	return readById(db, id, p)
+}
+
 func (p *Project) BeforeCreate(tx *gorm.DB) (err error) {
 	p.GenerateEnvelopeKey()
 	return nil
+}
+
+func (Project) GetAliases() []string {
+	return []string{}
 }
 
 func (p *Project) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {

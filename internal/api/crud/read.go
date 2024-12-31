@@ -19,7 +19,7 @@ const (
 func Read(m models.ReadableModel) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var id uint
-		userId, ok := before(w, r, m.GetName(), &id)
+		userId, ok := before(w, r, m, &id)
 		if !ok {
 			return
 		}
@@ -29,7 +29,7 @@ func Read(m models.ReadableModel) http.HandlerFunc {
 			return
 		}
 
-		data, err := database.GetRecord(id, m)
+		data, err := m.ReadById(database.GetDatabaseConnection(), id)
 		if err != nil {
 			http.Error(w, "DB error", http.StatusBadRequest)
 			return
@@ -62,7 +62,7 @@ func CountEntities(m models.ReadableModel) http.HandlerFunc {
 
 		forbiddenActionStr := fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead)
 
-		userId, ok := before(w, r, m.GetName(), nil)
+		userId, ok := before(w, r, m, nil)
 		if !ok {
 			http.Error(w, forbiddenActionStr, http.StatusForbidden)
 			return

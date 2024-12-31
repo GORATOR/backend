@@ -379,6 +379,23 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
+  '/issue/{id}':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: envelope detail info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error      
   '/envelopes':
     get:
       tags:

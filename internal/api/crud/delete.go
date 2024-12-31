@@ -12,7 +12,7 @@ import (
 func Delete(m models.Model) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var id uint
-		userId, ok := before(w, r, m.GetName(), &id)
+		userId, ok := before(w, r, m, &id)
 		if !ok {
 			return
 		}

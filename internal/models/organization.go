@@ -165,6 +165,14 @@ func (o *Organization) FindAll(query *gorm.DB) (interface{}, error) {
 	return records, err
 }
 
+func (o *Organization) ReadById(db *gorm.DB, id uint) (interface{}, error) {
+	return readById(db, id, o)
+}
+
+func (Organization) GetAliases() []string {
+	return []string{}
+}
+
 func (u *Organization) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
 }

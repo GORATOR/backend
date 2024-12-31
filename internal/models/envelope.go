@@ -143,12 +143,28 @@ func (e *EnvelopeEventCommon) FindAll(query *gorm.DB) (interface{}, error) {
 	return records, nil
 }
 
+func (e *EnvelopeEventCommon) ReadById(db *gorm.DB, id uint) (interface{}, error) {
+	result := db.Where("id = ?", id).
+		Preload("EventCommonSdk").
+		Preload("EnvelopeEventExtras").
+		Preload("Project").
+		First(&e)
+	return e, result.Error
+}
+
 func (e *EnvelopeEventCommon) GetName() string {
 	return EnvelopeEventCommonModelName
 }
 
 func (e *EnvelopeEventCommon) GetSelectFields() *[]string {
 	return nil
+}
+
+func (EnvelopeEventCommon) GetAliases() []string {
+	return []string{
+		"issue",
+		"envelope",
+	}
 }
 
 func (e *EnvelopeEventCommon) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
