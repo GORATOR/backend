@@ -586,6 +586,51 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
+  '/envelopes/count':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: teamId
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam' 
+        - in: query
+          name: projectId
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: userId
+          required: false
+          schema: 
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: createdAtFrom
+          required: false
+          description: data with url encoded special chars, for example 2024-12-21\%2020:00:00\%20%2b0300
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+        - in: query
+          name: createdAtTo
+          required: false
+          description: data with url encoded special chars, for example 2024-12-21\%2020:00:00\%20%2b0300
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityCountResponse'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
   '/login':
     post:
       tags:

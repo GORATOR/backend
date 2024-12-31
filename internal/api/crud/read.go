@@ -74,6 +74,7 @@ func CountEntities(m models.ReadableModel) http.HandlerFunc {
 		}
 
 		query := database.GetDatabaseConnection().Model(&m)
+		m.ParseQueryString(r.URL.RawPath, query, r)
 		countResult := query.Count(&count)
 
 		if countResult.Error != nil {
