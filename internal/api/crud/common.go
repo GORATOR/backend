@@ -36,32 +36,27 @@ func extractIdFromUrl(m models.ReadableModel, path string) (uint, error) {
 	entity := m.GetName()
 	searchStr := "/" + entity + "/"
 	if len(path) < len(searchStr) {
-		for _, alias := range m.GetAliases() {
-			searchStr = "/" + alias + "/"
-			if len(path) < len(searchStr) {
-				continue
-			}
-			id, err := strconv.Atoi(path[len("/"+alias+"/"):])
-			if err == nil {
-				return uint(id), nil
-			}
-		}
-		return 0, fmt.Errorf("")
+		return extractIdFromUrlByAlias(m, path)
 	}
 	id, err := strconv.Atoi(path[len(searchStr):])
 	if err != nil {
-		for _, alias := range m.GetAliases() {
-			searchStr = "/" + alias + "/"
-			if len(path) < len(searchStr) {
-				continue
-			}
-			id, err = strconv.Atoi(path[len("/"+alias+"/"):])
-			if err == nil {
-				return uint(id), nil
-			}
-		}
+		return extractIdFromUrlByAlias(m, path)
 	}
 	return uint(id), fmt.Errorf("")
+}
+
+func extractIdFromUrlByAlias(m models.ReadableModel, path string) (uint, error) {
+	for _, alias := range m.GetAliases() {
+		searchStr := "/" + alias + "/"
+		if len(path) < len(searchStr) {
+			continue
+		}
+		id, err := strconv.Atoi(path[len("/"+alias+"/"):])
+		if err == nil {
+			return uint(id), nil
+		}
+	}
+	return 0, fmt.Errorf("")
 }
 
 func tryBuildReadQuery(w http.ResponseWriter, r *http.Request, m models.ReadableModel, ignoreActive bool) (*gorm.DB, error) {
