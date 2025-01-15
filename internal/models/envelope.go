@@ -26,10 +26,10 @@ const (
 )
 
 type EnvelopeModel struct {
-	ID        uint           `gorm:"primarykey" json:"-"`
-	CreatedAt time.Time      `json:"-"`
-	UpdatedAt time.Time      `json:"-"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	ID        uint `gorm:"primarykey" `
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index" `
 }
 
 type EnvelopeResponse struct {
