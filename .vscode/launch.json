@@ -7,7 +7,7 @@
             "request": "launch",
             "mode": "debug",
             "args": [
-                "-s" //setup environment (database structure)
+               // "-s" //setup environment (database structure)
             ],
             "program": "${workspaceFolder}",
             "env": {

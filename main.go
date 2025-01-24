@@ -59,8 +59,7 @@ func main() {
 
 	if len(os.Args) > 1 {
 		runCliMode()
-		//todo: distroless issue?
-		//return
+		return
 	}
 
 	mux := http.NewServeMux()
