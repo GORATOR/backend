@@ -11,19 +11,35 @@ services:
     networks:
       - gorator
 
-  backend:
+  init-backend:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: init-backend
+    image: backend
+    command: "./backend -s"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - gorator
+
+  backend:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     container_name: backend
     image: backend
     restart: on-failure
+    entrypoint: ["./backend"]
     env_file:
       - .env
-    ports:
-      - 8080:8080
     depends_on:
       - db
+      - init-backend
+    ports:
+      - 8080:8080
     networks:
       - gorator
 

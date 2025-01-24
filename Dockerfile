@@ -10,6 +10,4 @@ RUN go mod download \
 
 FROM gcr.io/distroless/static-debian12:latest AS production
 
-COPY --from=BUILD /app/backend .
-
-CMD ["./backend"]
+COPY --from=build /app/backend .
