@@ -187,4 +187,5 @@ func SetupDatabase() {
 			setupRoles(db, userAdmin, userViewer)
 		}
 	}
+	fmt.Println("database setup is done")
 }
