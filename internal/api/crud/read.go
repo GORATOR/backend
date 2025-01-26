@@ -9,6 +9,7 @@ import (
 	"github.com/GORATOR/backend/internal/models"
 	"github.com/GORATOR/backend/internal/service"
 	"github.com/GORATOR/backend/internal/utils"
+	"gorm.io/gorm"
 )
 
 const (
@@ -58,7 +59,6 @@ func ReadEntities(m models.ReadableModel, ignoreActive bool) http.HandlerFunc {
 
 func CountEntities(m models.ReadableModel) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var count int64
 
 		forbiddenActionStr := fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead)
 
@@ -75,19 +75,56 @@ func CountEntities(m models.ReadableModel) http.HandlerFunc {
 
 		query := database.GetDatabaseConnection().Model(&m)
 		m.ParseQueryString(r.URL.RawPath, query, r)
-		countResult := query.Count(&count)
-
-		if countResult.Error != nil {
-			fmt.Printf("CountEntities error for %s entity", m.GetName())
-			fmt.Print(countResult.Error)
-			http.Error(w, "", http.StatusBadRequest)
-			return
+		groupBy := utils.GetQueryParam(r, "groupBy")
+		if groupBy != "" {
+			countEntitiesGroupedResult(w, groupBy, query, m)
+		} else {
+			countEntitiesResult(w, query, m.GetName())
 		}
-
-		response := models.ModelCountResponse{
-			Entity: m.GetName(),
-			Count:  count,
-		}
-		utils.HttpReturnJson(w, response)
 	}
+}
+
+func onCountError(modelName string, w http.ResponseWriter, countResult *gorm.DB) {
+	fmt.Printf("CountEntities error for \"'%s\" entity ", modelName)
+	fmt.Print(countResult.Error)
+	http.Error(w, "", http.StatusBadRequest)
+}
+
+func countEntitiesGroupedResult(w http.ResponseWriter, groupBy string, query *gorm.DB, m models.ReadableModel) {
+	var result []models.ModelGroupedCountRecord
+	if !m.IsAllowedGroupField(groupBy) {
+		fmt.Printf("countEntitiesGroupedResult: using disallowed field %s", groupBy)
+		http.Error(w, fmt.Sprintf("Group by %s field is not allowed", groupBy), http.StatusBadRequest)
+		return
+	}
+	selectStr := fmt.Sprintf("count(*) AS count, %s AS field", groupBy)
+	countResult := query.Select(selectStr).Scan(&result)
+
+	if countResult.Error != nil {
+		onCountError(m.GetName(), w, countResult)
+		return
+	}
+
+	response := models.ModelGroupedCountResponse{
+		Entity:  m.GetName(),
+		GroupBy: groupBy,
+		Data:    result,
+	}
+	utils.HttpReturnJson(w, response)
+}
+
+func countEntitiesResult(w http.ResponseWriter, query *gorm.DB, modelName string) {
+	var count int64
+	countResult := query.Count(&count)
+
+	if countResult.Error != nil {
+		onCountError(modelName, w, countResult)
+		return
+	}
+
+	response := models.ModelCountResponse{
+		Entity: modelName,
+		Count:  count,
+	}
+	utils.HttpReturnJson(w, response)
 }
