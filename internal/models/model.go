@@ -53,7 +53,7 @@ type ModelGroupedCountRecord struct {
 }
 
 type ModelGroupedCountResponse struct {
-	Entity  string                    `json:"entity"`
+	ModelCountResponse
 	GroupBy string                    `json:"groupBy"`
 	Data    []ModelGroupedCountRecord `json:"data"`
 }

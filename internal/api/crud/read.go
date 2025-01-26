@@ -92,6 +92,7 @@ func onCountError(modelName string, w http.ResponseWriter, countResult *gorm.DB)
 
 func countEntitiesGroupedResult(w http.ResponseWriter, groupBy string, query *gorm.DB, m models.ReadableModel) {
 	var result []models.ModelGroupedCountRecord
+	var count int64
 	if !m.IsAllowedGroupField(groupBy) {
 		fmt.Printf("countEntitiesGroupedResult: using disallowed field %s", groupBy)
 		http.Error(w, fmt.Sprintf("Group by %s field is not allowed", groupBy), http.StatusBadRequest)
@@ -105,8 +106,16 @@ func countEntitiesGroupedResult(w http.ResponseWriter, groupBy string, query *go
 		return
 	}
 
+	count = 0
+	for _, rec := range result {
+		count += rec.Count
+	}
+
 	response := models.ModelGroupedCountResponse{
-		Entity:  m.GetName(),
+		ModelCountResponse: models.ModelCountResponse{
+			Entity: m.GetName(),
+			Count:  count,
+		},
 		GroupBy: groupBy,
 		Data:    result,
 	}
