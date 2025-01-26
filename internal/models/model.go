@@ -54,8 +54,8 @@ type ModelGroupedCountRecord struct {
 
 type ModelGroupedCountResponse struct {
 	ModelCountResponse
-	GroupBy string                    `json:"groupBy"`
-	Data    []ModelGroupedCountRecord `json:"data"`
+	GroupBy     string                    `json:"groupBy"`
+	GroupedData []ModelGroupedCountRecord `json:"groupedData"`
 }
 
 func updateModel[T GenericModel](data []byte, tx *gorm.DB) (interface{}, error) {

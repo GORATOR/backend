@@ -116,8 +116,8 @@ func countEntitiesGroupedResult(w http.ResponseWriter, groupBy string, query *go
 			Entity: m.GetName(),
 			Count:  count,
 		},
-		GroupBy: groupBy,
-		Data:    result,
+		GroupBy:     groupBy,
+		GroupedData: result,
 	}
 	utils.HttpReturnJson(w, response)
 }
