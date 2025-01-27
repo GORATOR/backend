@@ -86,7 +86,7 @@ jobs:
 
       - name: Deploy project on the Remote Server
         run: |
-          rsync -crvz --delete -e 'ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no' .env docker-compose.yaml \
+          rsync -crvz --delete -e 'ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no' .env docker-compose.yml \
           ${{ secrets.BACKEND_HOST_USER }}@${{ secrets.BACKEND_HOST_IP }}:${{ secrets.BACKEND_HOST_PATH }} --chown=${{ secrets.BACKEND_HOST_USER }}:${{ secrets.BACKEND_HOST_USER }}
 
       - name: Deploy project on the Remote Server
