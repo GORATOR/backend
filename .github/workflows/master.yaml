@@ -49,7 +49,7 @@ jobs:
         uses: docker/build-push-action@v5
         env:
           DOCKER_HUB_USER: "dv4mp1r3"
-          DOCKER_HUB_REPOSITORY: "gorator"
+          DOCKER_HUB_REPOSITORY: "gorator-backend"
           IMAGE_TAG: ${{ matrix.IMAGE_TAG }}
         with:
           push: true
