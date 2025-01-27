@@ -16,7 +16,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: init-backend
-    image: backend
+    image: dv4mp1r3/gorator-backend
     command: "./backend -s"
     env_file:
       - .env
@@ -30,7 +30,7 @@ services:
     #   context: .
     #   dockerfile: Dockerfile
     container_name: backend
-    image: backend
+    image: dv4mp1r3/gorator-backend
     restart: on-failure
     entrypoint: ["./backend"]
     env_file:
