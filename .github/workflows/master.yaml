@@ -58,3 +58,41 @@ jobs:
           file: Dockerfile
           cache-from: type=gha,ref=${{ env.DOCKER_HUB_USER }}/${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG }}
           cache-to: type=gha,ref=${{ env.DOCKER_HUB_USER }}/${{ env.DOCKER_HUB_REPOSITORY }}:${{ env.IMAGE_TAG }},mode=max
+
+  deploy-gorator-backend-image:
+    needs: build-gorator-backend-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH for connection
+        run: |
+          mkdir -p ~/.ssh \
+          && touch ~/.ssh/id_rsa \
+          && chmod 600 ~/.ssh/id_rsa
+      
+      - name: Add Private SSH key from Secrets
+        run: |
+          cat << EOF > ~/.ssh/id_rsa
+          ${{ secrets.BACKEND_HOST_PRIVATE_SSH }}
+          EOF
+
+      - name: Create .env file from Secrets
+        run: |
+          cat << EOF > .env
+          ${{ secrets.BACKEND_ENV_FILE }}
+          EOF
+
+      - name: Deploy project on the Remote Server
+        run: |
+          rsync -crvz --delete -e 'ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no' .env docker-compose.yaml \
+          ${{ secrets.BACKEND_HOST_USER }}@${{ secrets.BACKEND_HOST_IP }}:${{ secrets.BACKEND_HOST_PATH }} --chown=${{ secrets.BACKEND_HOST_USER }}:${{ secrets.BACKEND_HOST_USER }}
+
+      - name: Deploy project on the Remote Server
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.BACKEND_HOST_USER }}@${{ secrets.BACKEND_HOST_IP }} "cd ${{ secrets.BACKEND_HOST_PATH }} \
+          && docker compose pull \
+          && docker compose up -d --force-recreate \
+          && docker container prune --force 
+          && docker image prune --force --all"
