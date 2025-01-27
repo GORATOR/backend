@@ -94,5 +94,5 @@ jobs:
           ssh -i ~/.ssh/id_rsa ${{ secrets.BACKEND_HOST_USER }}@${{ secrets.BACKEND_HOST_IP }} "cd ${{ secrets.BACKEND_HOST_PATH }} \
           && docker compose pull \
           && docker compose up -d --force-recreate \
-          && docker container prune --force 
+          && docker container prune --force \
           && docker image prune --force --all"
