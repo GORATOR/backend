@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GORATOR/backend/internal/utils"
 	"gorm.io/gorm"
 )
 
@@ -31,6 +32,13 @@ type EnvelopeModel struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index" `
+}
+
+type EnvelopeTag struct {
+	EnvelopeModel
+	EnvelopeEventCommon []*EnvelopeEventCommon `gorm:"many2many:eetags_eecommon;"`
+	Name                string
+	Value               string
 }
 
 type EnvelopeResponse struct {
@@ -176,7 +184,7 @@ func (e *EnvelopeEventCommon) ParseQueryString(endpoint string, query *gorm.DB, 
 	parseQueryParamIn(query, r, "userId", "project_id IN ?", getUserProjectIDs)
 	parseQueryParamIn(query, r, "teamId", "project_id IN ?", getTeamProjectIDs)
 
-	parseGroupBy(query, r)
+	e.parseGroupBy(query, r)
 }
 
 func (EnvelopeEventCommon) IsAllowedGroupField(groupBy string) bool {
@@ -189,7 +197,22 @@ func (EnvelopeEventCommon) IsAllowedGroupField(groupBy string) bool {
 			"dsn",
 			"project_id",
 			"envelope_key",
+			"tag",
 		},
 		groupBy,
 	)
+}
+
+func (e *EnvelopeEventCommon) parseGroupBy(query *gorm.DB, r *http.Request) {
+	groupBy := utils.GetQueryParam(r, "groupBy")
+	if groupBy == "" {
+		return
+	}
+
+	if groupBy == "tag" {
+		//todo: implement
+	} else {
+		query.Group(groupBy)
+	}
+
 }

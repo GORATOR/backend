@@ -145,6 +145,7 @@ func SetupDatabase() {
 		&models.EventCommonSdk{},
 		&models.EnvelopeEventCommon{},
 		&models.EnvelopeEventExtra{},
+		&models.EnvelopeTag{},
 		&models.User{},
 		&models.Team{},
 		&models.Organization{},
