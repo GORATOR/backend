@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -174,4 +175,21 @@ func (e *EnvelopeEventCommon) ParseQueryString(endpoint string, query *gorm.DB, 
 
 	parseQueryParamIn(query, r, "userId", "project_id IN ?", getUserProjectIDs)
 	parseQueryParamIn(query, r, "teamId", "project_id IN ?", getTeamProjectIDs)
+
+	parseGroupBy(query, r)
+}
+
+func (EnvelopeEventCommon) IsAllowedGroupField(groupBy string) bool {
+	return slices.Contains(
+		[]string{
+			"name",
+			"created_at",
+			"updated_at",
+			"sent_at",
+			"dsn",
+			"project_id",
+			"envelope_key",
+		},
+		groupBy,
+	)
 }

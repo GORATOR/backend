@@ -10,6 +10,7 @@ import (
 
 type QueryStringParser interface {
 	ParseQueryString(endpoint string, query *gorm.DB, r *http.Request)
+	IsAllowedGroupField(groupBy string) bool
 }
 
 type InputParser interface {
@@ -62,5 +63,15 @@ func parseQueryParamIn(
 	ids, _ := selectFunc(userIdUint, query)
 	if len(ids) > 0 {
 		query.Where(inQuerySql, ids)
+	}
+}
+
+func parseGroupBy(
+	query *gorm.DB,
+	r *http.Request,
+) {
+	groupBy := utils.GetQueryParam(r, "groupBy")
+	if groupBy != "" {
+		query.Group(groupBy)
 	}
 }

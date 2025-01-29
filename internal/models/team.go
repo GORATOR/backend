@@ -183,6 +183,7 @@ func (t *Team) GetName() string {
 
 func (t *Team) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
 	parseNameQueryParam(query, r)
+	parseGroupBy(query, r)
 }
 
 func (t *Team) GetSelectFields() *[]string {
@@ -212,4 +213,8 @@ func (u *Team) OnReadParseInput(endpoint string, query *gorm.DB, r *http.Request
 
 func (u *Team) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
+}
+
+func (Team) IsAllowedGroupField(groupBy string) bool {
+	return isAllowedGroupFieldCommon(groupBy)
 }

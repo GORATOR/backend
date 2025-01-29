@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/GORATOR/backend/internal/utils"
@@ -149,4 +150,17 @@ where p.id is not null`
 
 	resultError := db.Raw(query, userId).Find(&result)
 	return result, resultError.Error
+}
+
+func (Project) IsAllowedGroupField(groupBy string) bool {
+	return slices.Contains(
+		[]string{
+			"name",
+			"created_at",
+			"updated_at",
+			"created_by",
+			"team_id",
+		},
+		groupBy,
+	)
 }

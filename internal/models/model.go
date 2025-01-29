@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"gorm.io/gorm"
@@ -44,6 +45,17 @@ type ModelCommon interface {
 type ModelCountResponse struct {
 	Entity string `json:"entity"`
 	Count  int64  `json:"count"`
+}
+
+type ModelGroupedCountRecord struct {
+	Field string `json:"field"`
+	Count int64  `json:"count"`
+}
+
+type ModelGroupedCountResponse struct {
+	ModelCountResponse
+	GroupBy     string                    `json:"groupBy"`
+	GroupedData []ModelGroupedCountRecord `json:"groupedData"`
 }
 
 func updateModel[T GenericModel](data []byte, tx *gorm.DB) (interface{}, error) {
@@ -149,4 +161,16 @@ func getModelNameAlias(relatedModelName string) string {
 		return "org"
 	}
 	return relatedModelName
+}
+
+func isAllowedGroupFieldCommon(groupBy string) bool {
+	return slices.Contains(
+		[]string{
+			"name",
+			"created_at",
+			"updated_at",
+			"created_by",
+		},
+		groupBy,
+	)
 }

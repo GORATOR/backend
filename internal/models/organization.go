@@ -184,3 +184,7 @@ func (u *Organization) OnReadParseInput(endpoint string, query *gorm.DB, r *http
 func (u *Organization) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
 }
+
+func (Organization) IsAllowedGroupField(groupBy string) bool {
+	return isAllowedGroupFieldCommon(groupBy)
+}

@@ -535,12 +535,54 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
+  '/projects/count':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: groupBy
+          required: false
+          description: one of 
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+          enum:
+            - name
+            - created_at
+            - updated_at
+            - created_by
+            - team_id
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityCountResponse'                
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
   '/users/count':
     get:
       tags:
         - "entity"
       security:
         - cookieAuth: []
+      parameters:
+        - in: query
+          name: groupBy
+          required: false
+          description: one of 
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+          enum:
+            - name
+            - created_at
+            - updated_at
+            - created_by
       responses:
         '200':
           description: todo
@@ -558,6 +600,17 @@ paths:
         - "entity"
       security:
         - cookieAuth: []
+      parameters:
+        - in: query
+          name: groupBy
+          required: false
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+          enum:
+            - name
+            - created_at
+            - updated_at
+            - created_by
       responses:
         '200':
           description: todo
@@ -575,6 +628,17 @@ paths:
         - "entity"
       security:
         - cookieAuth: []
+      parameters:
+        - in: query
+          name: groupBy
+          required: false
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+          enum:
+            - name
+            - created_at
+            - updated_at
+            - created_by
       responses:
         '200':
           description: todo
@@ -593,6 +657,20 @@ paths:
       security:
         - cookieAuth: []
       parameters:
+        - in: query
+          name: groupBy
+          required: false
+          description: one of 
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+          enum:
+            - name
+            - created_at
+            - updated_at
+            - sent_at
+            - dsn
+            - project_id
+            - envelope_key
         - in: query
           name: teamId
           required: false
@@ -693,6 +771,20 @@ components:
           type: string
         count:
           type: number
+        groupBy:
+          type: string
+        groupedData:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              count:
+                type: number
+      required:
+        - entity
+        - count
     UserInput:
       type: object
       properties:
