@@ -161,6 +161,11 @@ func SetupDatabase() {
 		panic(uniqueIndexResult.Error)
 	}
 
+	uniqueIndexResult = db.Raw("CREATE UNIQUE INDEX unique_ee_tag ON envelope_tags (name, value)")
+	if uniqueIndexResult.Error != nil {
+		panic(uniqueIndexResult.Error)
+	}
+
 	envelopeKeyIndexResult := db.Raw("CREATE UNIQUE INDEX unique_envelope_key ON projects (envelope_key)")
 	if envelopeKeyIndexResult.Error != nil {
 		panic(uniqueIndexResult.Error)
