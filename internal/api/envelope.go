@@ -24,7 +24,7 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postItems := isValidRequest(body)
+	postItems := tryParsePostItems(body)
 	if len(postItems) != models.EnvelopeRequiredPostItems {
 		utils.HttpReturnBadRequest(w)
 		return
@@ -36,6 +36,13 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		utils.HttpReturnBadRequest(w)
 		return
 	}
+
+	tags, err := service.ParseTags(postItems)
+	if err != nil {
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+	fmt.Println(tags)
 
 	if commonRecord.EventId == "" {
 		utils.HttpReturnBadRequest(w)
@@ -87,7 +94,7 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func isValidRequest(body []byte) []string {
+func tryParsePostItems(body []byte) []string {
 	postItems := strings.Split(string(body), "\n")
 	result := []string{}
 	for _, item := range postItems {
