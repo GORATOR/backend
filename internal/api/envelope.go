@@ -79,7 +79,7 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 
 	commonRecord.ProjectID = project.ID
 
-	err = database.EnvelopeSaveData(&commonRecord, postItems)
+	err = database.EnvelopeSaveData(&commonRecord, postItems, &tags)
 	if err != nil {
 		fmt.Println(err)
 		utils.HttpReturnBadRequest(w)

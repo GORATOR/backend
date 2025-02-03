@@ -2,12 +2,13 @@ package database
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/GORATOR/backend/internal/models"
 	"gorm.io/gorm"
 )
 
-func EnvelopeSaveData(commonRecord *models.EnvelopeEventCommon, postItems []string) error {
+func EnvelopeSaveData(commonRecord *models.EnvelopeEventCommon, postItems []string, tags *[]models.EnvelopeTag) error {
 	sdkResult := postgresConnection.Where(
 		"name = ? and version = ?",
 		commonRecord.EventCommonSdk.Name,
@@ -42,5 +43,36 @@ func EnvelopeSaveData(commonRecord *models.EnvelopeEventCommon, postItems []stri
 	if extraResult.Error != nil {
 		return extraResult.Error
 	}
+
+	return bindTags(commonRecord, tags)
+}
+
+func bindTags(commonRecord *models.EnvelopeEventCommon, tags *[]models.EnvelopeTag) error {
+	for _, tag := range *tags {
+		findResult := postgresConnection.
+			Model(&tag).
+			Where("name = ? and value = ?", tag.Name, tag.Value).
+			Find(&tag)
+		if findResult.Error != nil {
+			fmt.Println(findResult.Error)
+			continue
+		}
+		if findResult.RowsAffected == 0 {
+			tagInsertResult := postgresConnection.Create(&tag)
+			if tagInsertResult.Error != nil {
+				fmt.Println(findResult.Error)
+				continue
+			}
+		}
+		tag.EnvelopeEventCommon = []*models.EnvelopeEventCommon{
+			commonRecord,
+		}
+		tagSaveResult := postgresConnection.Save(tag)
+		if tagSaveResult.Error != nil {
+			fmt.Printf("bindTags onSave error %s", tagSaveResult.Error)
+			return tagSaveResult.Error
+		}
+	}
+
 	return nil
 }
