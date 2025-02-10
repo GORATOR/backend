@@ -229,12 +229,19 @@ func (e *EnvelopeEventCommon) parseGroupBy(query *gorm.DB, r *http.Request) {
 	}
 
 	if groupBy == "tag" {
-		query.Table("envelope_event_commons AS eec").
-			Select("count(eec.*) as count, et.value AS field").
-			Joins("LEFT JOIN eetags_eecommon ee ON ee.envelope_event_common_id = eec.id AND eec.id IS NOT NULL").
-			Joins("LEFT JOIN envelope_tags et ON et.id = ee.envelope_tag_id AND et.id IS NOT NULL").
-			Group("et.value")
-
+		if r.URL.Path == "/envelopes/count" {
+			query.Table("envelope_event_commons AS eec").
+				Select("count(eec.*) as count, et.value AS field").
+				Joins("LEFT JOIN eetags_eecommon ee ON ee.envelope_event_common_id = eec.id AND eec.id IS NOT NULL").
+				Joins("LEFT JOIN envelope_tags et ON et.id = ee.envelope_tag_id AND et.id IS NOT NULL").
+				Group("et.value")
+		} else {
+			query.Table("envelope_event_commons AS eec").
+				Select("eec.*, et.value AS tag").
+				Joins("LEFT JOIN eetags_eecommon ee ON ee.envelope_event_common_id = eec.id AND eec.id IS NOT NULL").
+				Joins("LEFT JOIN envelope_tags et ON et.id = ee.envelope_tag_id AND et.id IS NOT NULL").
+				Group("et.value, eec.id")
+		}
 	} else {
 		query.Group(groupBy)
 	}

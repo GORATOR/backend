@@ -404,6 +404,14 @@ paths:
         - cookieAuth: []
       parameters:
         - in: query
+          name: groupBy
+          required: false
+          description: one of 
+          schema: 
+            $ref: '#/components/schemas/stringQueryParam'
+          enum:
+            - tag
+        - in: query
           name: limit
           required: false
           description: default 10
@@ -671,6 +679,7 @@ paths:
             - dsn
             - project_id
             - envelope_key
+            - tag
         - in: query
           name: teamId
           required: false
