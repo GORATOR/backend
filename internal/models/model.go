@@ -23,10 +23,15 @@ type Model interface {
 	WritebleModel
 }
 
+type Countable interface {
+	Count(query *gorm.DB, groupBy string) (interface{}, error)
+}
+
 type ReadableModel interface {
 	ModelCommon
 	QueryStringParser
-	FindAll(query *gorm.DB) (interface{}, error)
+	Countable
+	FindAll(query *gorm.DB, groupBy string) (interface{}, error)
 	ReadById(db *gorm.DB, id uint) (interface{}, error)
 }
 
@@ -84,7 +89,7 @@ func createModel[T GenericModel](data []byte, tx *gorm.DB) (interface{}, error) 
 	return gm, insertResult.Error
 }
 
-func findAll[T GenericModel](selectFields []string, query *gorm.DB) (interface{}, error) {
+func findAll[T GenericModel](selectFields []string, query *gorm.DB, groupBy string) (interface{}, error) {
 	var records []T
 	if selectFields != nil {
 		query.Select(selectFields)
@@ -173,4 +178,61 @@ func isAllowedGroupFieldCommon(groupBy string) bool {
 		},
 		groupBy,
 	)
+}
+
+func countCommon(groupBy string, query *gorm.DB, m ReadableModel) (interface{}, error) {
+	if groupBy != "" {
+		return countEntitiesGroupedResult(groupBy, query, m)
+	} else {
+		return countEntitiesResult(query, m)
+	}
+}
+
+func countEntitiesGroupedResult(groupBy string, query *gorm.DB, m ReadableModel) (ModelGroupedCountResponse, error) {
+	response := ModelGroupedCountResponse{
+		ModelCountResponse: ModelCountResponse{
+			Entity: m.GetName(),
+			Count:  0,
+		},
+		GroupBy:     groupBy,
+		GroupedData: []ModelGroupedCountRecord{},
+	}
+	var result []ModelGroupedCountRecord
+	var count int64
+	if !m.IsAllowedGroupField(groupBy) {
+		fmt.Printf("countEntitiesGroupedResult: using disallowed field %s", groupBy)
+		return response, fmt.Errorf("using disallowed field %s", groupBy)
+	}
+	selectStr := fmt.Sprintf("count(*) AS count, %s AS field", groupBy)
+	countResult := query.Select(selectStr).Scan(&result)
+
+	if countResult.Error != nil {
+		return response, countResult.Error
+	}
+
+	count = 0
+	for _, rec := range result {
+		count += rec.Count
+	}
+	response.GroupedData = result
+	response.ModelCountResponse.Count = count
+
+	return response, nil
+
+}
+
+func countEntitiesResult(query *gorm.DB, m ReadableModel) (ModelCountResponse, error) {
+	response := ModelCountResponse{
+		Entity: m.GetName(),
+		Count:  0,
+	}
+	var count int64
+	countResult := query.Count(&count)
+
+	if countResult.Error != nil {
+		return response, countResult.Error
+	}
+
+	response.Count = count
+	return response, nil
 }

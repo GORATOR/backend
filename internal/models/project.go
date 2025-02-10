@@ -95,8 +95,8 @@ func (p *Project) GetSelectFields() *[]string {
 	return nil
 }
 
-func (p *Project) FindAll(query *gorm.DB) (interface{}, error) {
-	records, err := findAll[Project](nil, query)
+func (p *Project) FindAll(query *gorm.DB, groupBy string) (interface{}, error) {
+	records, err := findAll[Project](nil, query, groupBy)
 	return records, err
 }
 
@@ -163,4 +163,8 @@ func (Project) IsAllowedGroupField(groupBy string) bool {
 		},
 		groupBy,
 	)
+}
+
+func (p *Project) Count(query *gorm.DB, groupBy string) (interface{}, error) {
+	return countCommon(groupBy, query, p)
 }

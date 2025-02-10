@@ -218,8 +218,8 @@ func (u *User) GetSelectFields() *[]string {
 	return &UserSelectFields
 }
 
-func (u *User) FindAll(query *gorm.DB) (interface{}, error) {
-	users, err := findAll[User](*u.GetSelectFields(), query)
+func (u *User) FindAll(query *gorm.DB, groupBy string) (interface{}, error) {
+	users, err := findAll[User](*u.GetSelectFields(), query, groupBy)
 	return users, err
 }
 
@@ -245,4 +245,8 @@ func (u *User) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Reque
 
 func (User) IsAllowedGroupField(groupBy string) bool {
 	return isAllowedGroupFieldCommon(groupBy)
+}
+
+func (u *User) Count(query *gorm.DB, groupBy string) (interface{}, error) {
+	return countCommon(groupBy, query, u)
 }
