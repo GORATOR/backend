@@ -183,9 +183,8 @@ func isAllowedGroupFieldCommon(groupBy string) bool {
 func countCommon(groupBy string, query *gorm.DB, m ReadableModel) (interface{}, error) {
 	if groupBy != "" {
 		return countEntitiesGroupedResult(groupBy, query, m)
-	} else {
-		return countEntitiesResult(query, m)
 	}
+	return countEntitiesResult(query, m)
 }
 
 func countEntitiesGroupedResult(groupBy string, query *gorm.DB, m ReadableModel) (ModelGroupedCountResponse, error) {
