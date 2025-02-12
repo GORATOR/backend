@@ -12,9 +12,9 @@ services:
       - gorator
 
   init-backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    #build:
+    #  context: .
+    #  dockerfile: Dockerfile
     container_name: init-backend
     image: dv4mp1r3/gorator-backend
     command: "./backend -s"
