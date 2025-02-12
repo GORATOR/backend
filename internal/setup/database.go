@@ -145,6 +145,7 @@ func SetupDatabase() {
 		&models.EventCommonSdk{},
 		&models.EnvelopeEventCommon{},
 		&models.EnvelopeEventExtra{},
+		&models.EnvelopeTag{},
 		&models.User{},
 		&models.Team{},
 		&models.Organization{},
@@ -156,6 +157,11 @@ func SetupDatabase() {
 		panic(err)
 	}
 	uniqueIndexResult := db.Raw("CREATE UNIQUE INDEX unique_name_version ON event_common_sdks (name, version)")
+	if uniqueIndexResult.Error != nil {
+		panic(uniqueIndexResult.Error)
+	}
+
+	uniqueIndexResult = db.Raw("CREATE UNIQUE INDEX unique_ee_tag ON envelope_tags (name, value)")
 	if uniqueIndexResult.Error != nil {
 		panic(uniqueIndexResult.Error)
 	}

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GORATOR/backend/internal/utils"
 	"gorm.io/gorm"
 )
 
@@ -31,6 +32,13 @@ type EnvelopeModel struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index" `
+}
+
+type EnvelopeTag struct {
+	EnvelopeModel
+	EnvelopeEventCommon []*EnvelopeEventCommon `gorm:"many2many:eetags_eecommon;"`
+	Name                string
+	Value               string
 }
 
 type EnvelopeResponse struct {
@@ -126,7 +134,10 @@ func (e *EnvelopeEventCommon) TryExtractKey(r *http.Request) error {
 	return err
 }
 
-func (e *EnvelopeEventCommon) FindAll(query *gorm.DB) (interface{}, error) {
+func (e *EnvelopeEventCommon) FindAll(query *gorm.DB, groupBy string) (interface{}, error) {
+	if groupBy == "tag" {
+		return e.findAllGroupByTag(query)
+	}
 	var records []EnvelopeEventCommon
 	result := query.Find(&records)
 	if result.Error != nil {
@@ -142,6 +153,22 @@ func (e *EnvelopeEventCommon) FindAll(query *gorm.DB) (interface{}, error) {
 		Preload("Project").
 		Find(&records)
 	return records, nil
+}
+
+func (EnvelopeEventCommon) findAllGroupByTag(query *gorm.DB) (interface{}, error) {
+	var scanResult []struct {
+		EnvelopeEventCommon
+		Tag string
+	}
+	result := make(map[string][]EnvelopeEventCommon)
+	findResult := query.Scan(&scanResult)
+	if findResult.Error != nil {
+		return nil, findResult.Error
+	}
+	for _, row := range scanResult {
+		result[row.Tag] = append(result[row.Tag], row.EnvelopeEventCommon)
+	}
+	return result, nil
 }
 
 func (e *EnvelopeEventCommon) ReadById(db *gorm.DB, id uint) (interface{}, error) {
@@ -176,7 +203,7 @@ func (e *EnvelopeEventCommon) ParseQueryString(endpoint string, query *gorm.DB, 
 	parseQueryParamIn(query, r, "userId", "project_id IN ?", getUserProjectIDs)
 	parseQueryParamIn(query, r, "teamId", "project_id IN ?", getTeamProjectIDs)
 
-	parseGroupBy(query, r)
+	e.parseGroupBy(query, r)
 }
 
 func (EnvelopeEventCommon) IsAllowedGroupField(groupBy string) bool {
@@ -189,7 +216,76 @@ func (EnvelopeEventCommon) IsAllowedGroupField(groupBy string) bool {
 			"dsn",
 			"project_id",
 			"envelope_key",
+			"tag",
 		},
 		groupBy,
 	)
+}
+
+func (e *EnvelopeEventCommon) parseGroupBy(query *gorm.DB, r *http.Request) {
+	groupBy := utils.GetQueryParam(r, "groupBy")
+	if groupBy == "" {
+		return
+	}
+
+	if groupBy == "tag" {
+		if r.URL.Path == "/envelopes/count" {
+			query.Table("envelope_event_commons AS eec").
+				Select("count(eec.*) as count, et.value AS field").
+				Joins("LEFT JOIN eetags_eecommon ee ON ee.envelope_event_common_id = eec.id AND eec.id IS NOT NULL").
+				Joins("LEFT JOIN envelope_tags et ON et.id = ee.envelope_tag_id AND et.id IS NOT NULL").
+				Group("et.value")
+		} else {
+			query.Table("envelope_event_commons AS eec").
+				Select("eec.*, et.value AS tag").
+				Joins("LEFT JOIN eetags_eecommon ee ON ee.envelope_event_common_id = eec.id AND eec.id IS NOT NULL").
+				Joins("LEFT JOIN envelope_tags et ON et.id = ee.envelope_tag_id AND et.id IS NOT NULL").
+				Group("et.value, eec.id")
+		}
+	} else {
+		query.Group(groupBy)
+	}
+
+}
+
+func (e *EnvelopeEventCommon) countEntitiesGroupedByTag(groupBy string, query *gorm.DB, m ReadableModel) (ModelGroupedCountResponse, error) {
+	response := ModelGroupedCountResponse{
+		ModelCountResponse: ModelCountResponse{
+			Entity: m.GetName(),
+			Count:  0,
+		},
+		GroupBy:     groupBy,
+		GroupedData: []ModelGroupedCountRecord{},
+	}
+	var result []ModelGroupedCountRecord
+	var count int64
+	if !m.IsAllowedGroupField(groupBy) {
+		fmt.Printf("countEntitiesGroupedResult: using disallowed field %s", groupBy)
+		return response, fmt.Errorf("using disallowed field %s", groupBy)
+	}
+	countResult := query.Scan(&result)
+
+	if countResult.Error != nil {
+		return response, countResult.Error
+	}
+
+	count = 0
+	for _, rec := range result {
+		count += rec.Count
+	}
+	response.GroupedData = result
+	response.ModelCountResponse.Count = count
+
+	return response, nil
+
+}
+
+func (e *EnvelopeEventCommon) Count(query *gorm.DB, groupBy string) (interface{}, error) {
+	if groupBy == "" {
+		return countEntitiesResult(query, e)
+	}
+	if groupBy == "tag" {
+		return e.countEntitiesGroupedByTag(groupBy, query, e)
+	}
+	return countEntitiesGroupedResult(groupBy, query, e)
 }

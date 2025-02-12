@@ -69,9 +69,19 @@ func parseQueryParamIn(
 func parseGroupBy(
 	query *gorm.DB,
 	r *http.Request,
+	model QueryStringParser,
+	passIdToGroup bool,
 ) {
+
 	groupBy := utils.GetQueryParam(r, "groupBy")
-	if groupBy != "" {
+	if groupBy == "" || !model.IsAllowedGroupField(groupBy) {
+		return
+	}
+
+	if passIdToGroup {
+		query.Group(fmt.Sprintf("%s, id", groupBy))
+	} else {
 		query.Group(groupBy)
 	}
+
 }

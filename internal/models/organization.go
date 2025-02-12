@@ -160,8 +160,8 @@ func (o *Organization) GetSelectFields() *[]string {
 	return nil
 }
 
-func (o *Organization) FindAll(query *gorm.DB) (interface{}, error) {
-	records, err := findAll[Organization](nil, query)
+func (o *Organization) FindAll(query *gorm.DB, groupBy string) (interface{}, error) {
+	records, err := findAll[Organization](nil, query, groupBy)
 	return records, err
 }
 
@@ -173,18 +173,22 @@ func (Organization) GetAliases() []string {
 	return []string{}
 }
 
-func (u *Organization) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+func (o *Organization) OnCreateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
 }
 
-func (u *Organization) OnReadParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+func (o *Organization) OnReadParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
 }
 
-func (u *Organization) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
+func (o *Organization) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Request) error {
 	return nil
 }
 
 func (Organization) IsAllowedGroupField(groupBy string) bool {
 	return isAllowedGroupFieldCommon(groupBy)
+}
+
+func (o *Organization) Count(query *gorm.DB, groupBy string) (interface{}, error) {
+	return countCommon(groupBy, query, o)
 }

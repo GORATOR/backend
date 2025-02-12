@@ -101,7 +101,7 @@ func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(fmt.Sprintf("GET %s/organizations", apiPrefix), crud.ReadEntities(&models.Organization{}, false))
 	mux.HandleFunc(fmt.Sprintf("GET %s/projects", apiPrefix), crud.ReadEntities(&models.Project{}, false))
 	mux.HandleFunc(fmt.Sprintf("GET %s/envelopes", apiPrefix), crud.ReadEntities(&models.EnvelopeEventCommon{}, true))
-	mux.HandleFunc(fmt.Sprintf("%s %s/envelopes/count", http.MethodGet, apiPrefix), crud.CountEntities(&models.EnvelopeEventCommon{}))
+	mux.HandleFunc(fmt.Sprintf("%s %s/envelopes/count", http.MethodGet, apiPrefix), crud.CountEntities(&models.EnvelopeEventCommon{}, true))
 	mux.HandleFunc(fmt.Sprintf("GET %s/issue/{id}", apiPrefix), crud.Read(&models.EnvelopeEventCommon{}))
 }
 
@@ -109,6 +109,6 @@ func setupEntityEndpoints(mux *http.ServeMux, m models.Model) {
 	mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPut, apiPrefix, m.GetName()), crud.Update(m))
 	mux.HandleFunc(fmt.Sprintf("%s %s/%s", http.MethodPost, apiPrefix, m.GetName()), crud.Create(m))
 	mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodGet, apiPrefix, m.GetName()), crud.Read(m))
-	mux.HandleFunc(fmt.Sprintf("%s %s/%s/count", http.MethodGet, apiPrefix, m.GetName()+"s"), crud.CountEntities(m))
+	mux.HandleFunc(fmt.Sprintf("%s %s/%s/count", http.MethodGet, apiPrefix, m.GetName()+"s"), crud.CountEntities(m, false))
 	mux.HandleFunc(fmt.Sprintf("%s %s/%s/{id}", http.MethodDelete, apiPrefix, m.GetName()), crud.Delete(m))
 }

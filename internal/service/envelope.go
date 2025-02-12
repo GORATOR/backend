@@ -42,10 +42,38 @@ func ParseSDK(commonRecord *models.EnvelopeEventCommon, postItems []string) erro
 	return nil
 }
 
+func ParseTags(postItems []string) ([]models.EnvelopeTag, error) {
+	var p fastjson.Parser
+	result := []models.EnvelopeTag{}
+	v, err := p.Parse(postItems[models.EnvelopePostItemMessage])
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		if v.Exists("tags") {
+			t := v.GetObject("tags")
+			t.Visit(tagVisit(&result))
+			return result, nil
+		}
+	}
+	return result, nil
+}
+
 func isSdkEmpty(commonRecord *models.EnvelopeEventCommon) bool {
 	return commonRecord.EventCommonSdk.Version == "" && commonRecord.EventCommonSdk.Name == ""
 }
 
 func formatValue(val string) string {
 	return strings.ReplaceAll(val, "\"", "")
+}
+
+func tagVisit(tags *[]models.EnvelopeTag) func(key []byte, v *fastjson.Value) {
+	return func(key []byte, v *fastjson.Value) {
+		*tags = append(
+			*tags,
+			models.EnvelopeTag{
+				Name:  string(key),
+				Value: strings.Trim(v.String(), "\""),
+			},
+		)
+	}
 }

@@ -183,15 +183,15 @@ func (t *Team) GetName() string {
 
 func (t *Team) ParseQueryString(endpoint string, query *gorm.DB, r *http.Request) {
 	parseNameQueryParam(query, r)
-	parseGroupBy(query, r)
+	parseGroupBy(query, r, t, true)
 }
 
 func (t *Team) GetSelectFields() *[]string {
 	return nil
 }
 
-func (t *Team) FindAll(query *gorm.DB) (interface{}, error) {
-	records, err := findAll[Team](nil, query)
+func (t *Team) FindAll(query *gorm.DB, groupBy string) (interface{}, error) {
+	records, err := findAll[Team](nil, query, groupBy)
 	return records, err
 }
 
@@ -217,4 +217,8 @@ func (u *Team) OnUpdateParseInput(endpoint string, query *gorm.DB, r *http.Reque
 
 func (Team) IsAllowedGroupField(groupBy string) bool {
 	return isAllowedGroupFieldCommon(groupBy)
+}
+
+func (t *Team) Count(query *gorm.DB, groupBy string) (interface{}, error) {
+	return countCommon(groupBy, query, t)
 }
