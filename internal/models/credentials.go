@@ -6,6 +6,6 @@ type CredentialsRequest struct {
 }
 
 type CredentialsResponse struct {
-	User      User   `json:"user"`
-	SessionId string `json:"session_id"`
+	User      *UserResponse `json:"user"`
+	SessionId string        `json:"sessionId"`
 }

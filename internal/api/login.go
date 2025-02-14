@@ -42,6 +42,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	if searchResult.Error != nil {
 		log.Printf("No user for ")
 		http.Error(w, "Not found", http.StatusNotFound)
+		return
 	}
 
 	session, err := sessionStore.CreateSession(int(user.ID))
@@ -55,7 +56,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Path:  "/",
 	})
 	resp := models.CredentialsResponse{
-		User:      user,
+		User:      user.ToResponse(),
 		SessionId: session.ID,
 	}
 	json.NewEncoder(w).Encode(resp)

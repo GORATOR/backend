@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/GORATOR/backend/internal/utils"
+
 	"gorm.io/gorm"
 )
 
@@ -59,6 +60,52 @@ type UserInput struct {
 	TeamIds         []uint
 	OrganizationIds []uint
 	ProjectIds      []uint
+}
+
+type UserResponse struct {
+	CreatedBy     uint            `json:"createdBy"`
+	Username      string          `json:"username"`
+	Email         string          `json:"email"`
+	AvatarUrl     string          `json:"avatarUrl"`
+	Active        bool            `json:"active"`
+	Teams         []*Team         `json:"teams"`
+	Organizations []*Organization `json:"organizations"`
+	Projects      []*Project      `json:"projects"`
+}
+
+func (u *User) ToResponse() *UserResponse {
+	if u == nil {
+		return nil
+	}
+
+	var teams []*Team
+	if u.Teams != nil {
+		teams = make([]*Team, len(u.Teams))
+		copy(teams, u.Teams)
+	}
+
+	var organizations []*Organization
+	if u.Organizations != nil {
+		organizations = make([]*Organization, len(u.Organizations))
+		copy(organizations, u.Organizations)
+	}
+
+	var projects []*Project
+	if u.Projects != nil {
+		projects = make([]*Project, len(u.Projects))
+		copy(projects, u.Projects)
+	}
+
+	return &UserResponse{
+		CreatedBy:     u.CreatedBy,
+		Username:      u.Username,
+		Email:         u.Email,
+		AvatarUrl:     u.Avatar,
+		Active:        u.Active,
+		Teams:         teams,
+		Organizations: organizations,
+		Projects:      projects,
+	}
 }
 
 func (u *User) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, error) {
