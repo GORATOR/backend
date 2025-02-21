@@ -18,14 +18,14 @@ var (
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
 	var credReq models.CredentialsRequest
 	if err := json.NewDecoder(r.Body).Decode(&credReq); err != nil {
 		fmt.Println(err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -41,13 +41,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	searchResult := db.Where(&models.User{Username: credReq.Username, Password: hash, Active: true}).First(&user)
 	if searchResult.Error != nil {
 		log.Printf("No user for ")
-		http.Error(w, "Not found", http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	session, err := sessionStore.CreateSession(int(user.ID))
 	if err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	http.SetCookie(w, &http.Cookie{
