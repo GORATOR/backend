@@ -10,6 +10,10 @@ services:
       - ./data:/var/lib/postgresql/data
     networks:
       - gorator
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 5
 
   init-backend:
     #build:
@@ -21,7 +25,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - gorator
 
