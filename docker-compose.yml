@@ -48,6 +48,19 @@ services:
     networks:
       - gorator
 
+  frontend:
+    container_name: frontend
+    image: dv4mp1r3/gorator-frontend
+    restart: on-failure
+    depends_on:
+      - db
+      - init-backend
+      - backend
+    ports:
+      - 3000:80
+    networks:
+      - gorator
+
 networks:
   gorator:
     name: gorator
