@@ -42,6 +42,16 @@ GORATOR_IS_DEBUG=1
 GORATOR_SKIP_AUTH_CHECK=1
 GORATOR_AUTH_USER_ID=7
 ```
+После этого можно отправлять запросы, примеры которых есть в каталоге curl. Например:
+```
+cd curl/create
+curl http://localhost:8080/user -d @user.json -X POST  -v
+```
+Или
+```
+cd curl/update
+curl http://localhost:8080/user -d @user.json -X PUT  -v
+```
 
 ## Текущий статус
 Есть апи для логина и получения сессии

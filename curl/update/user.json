@@ -1,0 +1,8 @@
+{
+    "ID": 48,
+    "Username":"changed1",
+    "Password":"1234",
+    "Email":"changed1-unique@email.com",
+    "Avatar":"avatar.jpg",
+    "Active":true
+}
