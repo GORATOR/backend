@@ -1,5 +1,4 @@
 **/data
 .env
 go
-curl
 .vscode/settings.json

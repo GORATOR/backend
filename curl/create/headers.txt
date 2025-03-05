@@ -1,0 +1,2 @@
+User-Agent: sentry.go/0.28.1
+Content-Type: application/json

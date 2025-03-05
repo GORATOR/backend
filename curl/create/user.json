@@ -1,0 +1,9 @@
+{
+    "Username":"u12",
+    "Password":"password",
+    "Email":"u12-unique@email.com",
+    "Avatar":"",
+    "Active":true,
+    "TeamIds": [1],
+    "OrganizationIds": [2]
+}

@@ -1,0 +1,7 @@
+{
+    "id": 13,
+    "name":"team test curl 111",
+    "organizationIds": [2],
+    "userIds": [1],
+    "projectIds": [1, 2]
+}
