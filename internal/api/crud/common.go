@@ -42,7 +42,7 @@ func extractIdFromUrl(m models.ReadableModel, path string) (uint, error) {
 	if err != nil {
 		return extractIdFromUrlByAlias(m, path)
 	}
-	return uint(id), fmt.Errorf("")
+	return uint(id), nil
 }
 
 func extractIdFromUrlByAlias(m models.ReadableModel, path string) (uint, error) {
