@@ -87,7 +87,7 @@ func (e *EnvelopeEventCommon) TryExtractKeyFromDsn() error {
 	if second <= 0 || first > second {
 		return fmt.Errorf(EnvelopeKeyFormatError, e.DSN)
 	}
-	e.EnvelopeKey = string([]rune(e.DSN)[first+1 : second])
+	e.EnvelopeKey = string([]rune(e.DSN)[first+2 : second])
 	return nil
 }
 
