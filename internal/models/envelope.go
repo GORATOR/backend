@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"slices"
@@ -288,4 +289,45 @@ func (e *EnvelopeEventCommon) Count(query *gorm.DB, groupBy string) (interface{}
 		return e.countEntitiesGroupedByTag(groupBy, query, e)
 	}
 	return countEntitiesGroupedResult(groupBy, query, e)
+}
+
+// Client Report models for handling discarded events
+type ClientReportHeader struct {
+	Type string `json:"type"`
+}
+
+type ClientReportDiscardedEvent struct {
+	Reason   string `json:"reason"`
+	Category string `json:"category"`
+	Quantity int    `json:"quantity"`
+}
+
+type ClientReportData struct {
+	Timestamp       float64                      `json:"timestamp"`
+	DiscardedEvents []ClientReportDiscardedEvent `json:"discarded_events"`
+}
+
+type ClientReport struct {
+	EnvelopeModel
+	ProjectID       uint
+	Timestamp       float64 `json:"timestamp"`
+	DiscardedEvents []ClientReportDiscardedEvent `json:"discarded_events"`
+	EnvelopeKey     string
+}
+
+func (c *ClientReport) GetName() string {
+	return "client_report"
+}
+
+func IsClientReport(postItems []string) bool {
+	if len(postItems) < 2 {
+		return false
+	}
+	
+	var header ClientReportHeader
+	if err := json.Unmarshal([]byte(postItems[1]), &header); err != nil {
+		return false
+	}
+	
+	return header.Type == "client_report"
 }

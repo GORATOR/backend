@@ -152,6 +152,7 @@ func SetupDatabase() {
 		&models.Role{},
 		&models.Rule{},
 		&models.Project{},
+		&models.ClientReport{},
 	)
 	if err != nil {
 		panic(err)

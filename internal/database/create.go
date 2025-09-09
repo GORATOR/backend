@@ -76,3 +76,15 @@ func bindTags(commonRecord *models.EnvelopeEventCommon, tags *[]models.EnvelopeT
 
 	return nil
 }
+
+func ClientReportSaveData(clientReport *models.ClientReport) error {
+	result := postgresConnection.Create(clientReport)
+	if result.Error != nil {
+		return result.Error
+	}
+	
+	fmt.Printf("Saved client report: %d discarded events for project %d\n", 
+		len(clientReport.DiscardedEvents), clientReport.ProjectID)
+	
+	return nil
+}

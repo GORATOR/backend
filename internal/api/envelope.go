@@ -25,6 +25,14 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 	}
 
 	postItems := tryParsePostItems(body)
+	
+	// Check if this is a client report
+	if models.IsClientReport(postItems) {
+		handleClientReport(w, r, postItems)
+		return
+	}
+	
+	// Handle regular envelope (existing logic)
 	if len(postItems) != models.EnvelopeRequiredPostItems {
 		utils.HttpReturnBadRequest(w)
 		return
@@ -103,6 +111,64 @@ func tryParsePostItems(body []byte) []string {
 		}
 	}
 	return result
+}
+
+func handleClientReport(w http.ResponseWriter, r *http.Request, postItems []string) {
+	fmt.Println("Processing client report...")
+	
+	clientReport, err := service.ParseClientReport(postItems)
+	if err != nil {
+		fmt.Printf("Failed to parse client report: %v\n", err)
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	// Extract project key from request (same as regular envelope)
+	var dummyRecord models.EnvelopeEventCommon
+	err = dummyRecord.TryExtractKey(r)
+	if err != nil {
+		fmt.Printf("Failed to extract key from client report: %v\n", err)
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+	
+	clientReport.EnvelopeKey = dummyRecord.EnvelopeKey
+
+	projectId := tryParseProjectId(r)
+	if projectId == 0 {
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	// Verify project exists and key matches
+	project := models.Project{}
+	projectResult := database.GetDatabaseConnection().
+		Where("id = ? and active = true", projectId).
+		First(&project)
+	if projectResult.Error != nil {
+		fmt.Printf("Project not found: %v\n", projectResult.Error)
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	if project.EnvelopeKey != clientReport.EnvelopeKey {
+		fmt.Printf("Project key mismatch: expected %s, got %s\n", project.EnvelopeKey, clientReport.EnvelopeKey)
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	clientReport.ProjectID = project.ID
+
+	err = database.ClientReportSaveData(clientReport)
+	if err != nil {
+		fmt.Printf("Failed to save client report: %v\n", err)
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	// Return empty response (like Sentry does for client reports)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("{}"))
 }
 
 func tryParseProjectId(r *http.Request) uint {
