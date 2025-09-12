@@ -82,16 +82,11 @@ func ParseClientReport(postItems []string) (*models.ClientReport, error) {
 	if len(postItems) < 3 {
 		return nil, fmt.Errorf("invalid client report format")
 	}
-	
-	var reportData models.ClientReportData
-	if err := json.Unmarshal([]byte(postItems[2]), &reportData); err != nil {
+
+	var report models.ClientReport
+	if err := json.Unmarshal([]byte(postItems[2]), &report); err != nil {
 		return nil, fmt.Errorf("failed to parse client report data: %v", err)
 	}
-	
-	clientReport := &models.ClientReport{
-		Timestamp:       reportData.Timestamp,
-		DiscardedEvents: reportData.DiscardedEvents,
-	}
-	
-	return clientReport, nil
+
+	return &report, nil
 }
