@@ -77,3 +77,16 @@ func tagVisit(tags *[]models.EnvelopeTag) func(key []byte, v *fastjson.Value) {
 		)
 	}
 }
+
+func ParseClientReport(postItems []string) (*models.ClientReport, error) {
+	if len(postItems) < 3 {
+		return nil, fmt.Errorf("invalid client report format")
+	}
+
+	var report models.ClientReport
+	if err := json.Unmarshal([]byte(postItems[2]), &report); err != nil {
+		return nil, fmt.Errorf("failed to parse client report data: %v", err)
+	}
+
+	return &report, nil
+}
