@@ -40,7 +40,7 @@ func parseQueryParam(
 ) {
 	param := utils.GetQueryParam(r, urlParamName)
 	if param != "" {
-		query.Where(fmt.Sprintf("%s %s ?", dbParamName, sign), param)
+		query.Where(fmt.Sprintf("%s %s ?", dbParamName, sign), param+"%")
 	}
 }
 
