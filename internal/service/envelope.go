@@ -23,6 +23,9 @@ func ParseSDK(commonRecord *models.EnvelopeEventCommon, postItems []string) erro
 				sdkObject := v.GetObject("sdk")
 				name := sdkObject.Get("name")
 				version := sdkObject.Get("version")
+				if commonRecord.EventCommonSdk == nil {
+					commonRecord.EventCommonSdk = &models.EventCommonSdk{}
+				}
 				if name != nil {
 					commonRecord.EventCommonSdk.Name = formatValue(name.String())
 				}
@@ -34,7 +37,7 @@ func ParseSDK(commonRecord *models.EnvelopeEventCommon, postItems []string) erro
 	}
 
 	if isSdkEmpty(commonRecord) {
-		commonRecord.EventCommonSdk = models.EventCommonSdk{
+		commonRecord.EventCommonSdk = &models.EventCommonSdk{
 			Name:    models.UndefinedSdk.Name,
 			Version: models.UndefinedSdk.Version,
 		}
@@ -59,7 +62,7 @@ func ParseTags(postItems []string) ([]models.EnvelopeTag, error) {
 }
 
 func isSdkEmpty(commonRecord *models.EnvelopeEventCommon) bool {
-	return commonRecord.EventCommonSdk.Version == "" && commonRecord.EventCommonSdk.Name == ""
+	return commonRecord.EventCommonSdk == nil || (commonRecord.EventCommonSdk.Version == "" && commonRecord.EventCommonSdk.Name == "")
 }
 
 func formatValue(val string) string {
