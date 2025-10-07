@@ -24,7 +24,7 @@ func EnvelopeSaveData(commonRecord *models.EnvelopeEventCommon, postItems []stri
 			return sdkResult.Error
 		}
 	}
-	commonRecord.EventCommonSdkID = commonRecord.EventCommonSdk.ID
+	commonRecord.EventCommonSdkID = &commonRecord.EventCommonSdk.ID
 	commonResult := postgresConnection.Create(&commonRecord)
 	if commonResult.Error != nil {
 		return commonResult.Error
@@ -82,9 +82,9 @@ func ClientReportSaveData(clientReport *models.ClientReport) error {
 	if result.Error != nil {
 		return result.Error
 	}
-	
-	fmt.Printf("Saved client report: %d discarded events for project %d\n", 
+
+	fmt.Printf("Saved client report: %d discarded events for project %d\n",
 		len(clientReport.DiscardedEvents), clientReport.ProjectID)
-	
+
 	return nil
 }

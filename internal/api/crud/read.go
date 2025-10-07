@@ -35,8 +35,6 @@ func Read(m models.ReadableModel) http.HandlerFunc {
 			return
 		}
 		json.NewEncoder(w).Encode(data)
-		w.WriteHeader(http.StatusOK)
-
 	}
 }
 

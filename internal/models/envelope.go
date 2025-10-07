@@ -53,15 +53,15 @@ type EventCommonSdk struct {
 
 type EnvelopeEventCommon struct {
 	EnvelopeModel
-	EventId             string         `json:"event_id"`
-	SentAt              string         `json:"sent_at"`
-	DSN                 string         `json:"dsn"`
-	EventCommonSdk      EventCommonSdk `json:"sdk"`
-	EventCommonSdkID    uint           `json:"-"`
-	EnvelopeEventExtras []EnvelopeEventExtra
-	EnvelopeKey         string `json:"-"`
-	Project             Project
-	ProjectID           uint
+	EventId             string               `json:"event_id"`
+	SentAt              string               `json:"sent_at"`
+	DSN                 string               `json:"dsn"`
+	EventCommonSdk      *EventCommonSdk      `json:"sdk"`
+	EventCommonSdkID    *uint                `json:"-"`
+	EnvelopeEventExtras []EnvelopeEventExtra `json:"EnvelopeEventExtras"`
+	EnvelopeKey         string               `json:"-"`
+	Project             *Project             `json:"project"`
+	ProjectID           *uint                `json:"ProjectID"`
 }
 
 type EnvelopeRequestType struct {
@@ -172,12 +172,13 @@ func (EnvelopeEventCommon) findAllGroupByTag(query *gorm.DB) (interface{}, error
 }
 
 func (e *EnvelopeEventCommon) ReadById(db *gorm.DB, id uint) (interface{}, error) {
+	var record EnvelopeEventCommon
 	result := db.Where("id = ?", id).
 		Preload("EventCommonSdk").
 		Preload("EnvelopeEventExtras").
 		Preload("Project").
-		First(&e)
-	return e, result.Error
+		First(&record)
+	return &record, result.Error
 }
 
 func (e *EnvelopeEventCommon) GetName() string {

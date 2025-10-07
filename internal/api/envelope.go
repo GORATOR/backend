@@ -25,13 +25,13 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 	}
 
 	postItems := tryParsePostItems(body)
-	
+
 	// Check if this is a client report
 	if models.IsClientReport(postItems) {
 		handleClientReport(w, r, postItems)
 		return
 	}
-	
+
 	// Handle regular envelope (existing logic)
 	if len(postItems) != models.EnvelopeRequiredPostItems {
 		utils.HttpReturnBadRequest(w)
@@ -85,7 +85,7 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commonRecord.ProjectID = project.ID
+	commonRecord.ProjectID = &project.ID
 
 	err = database.EnvelopeSaveData(&commonRecord, postItems, &tags)
 	if err != nil {
@@ -115,7 +115,7 @@ func tryParsePostItems(body []byte) []string {
 
 func handleClientReport(w http.ResponseWriter, r *http.Request, postItems []string) {
 	fmt.Println("Processing client report...")
-	
+
 	clientReport, err := service.ParseClientReport(postItems)
 	if err != nil {
 		fmt.Printf("Failed to parse client report: %v\n", err)
@@ -131,7 +131,7 @@ func handleClientReport(w http.ResponseWriter, r *http.Request, postItems []stri
 		utils.HttpReturnBadRequest(w)
 		return
 	}
-	
+
 	clientReport.EnvelopeKey = dummyRecord.EnvelopeKey
 
 	projectId := tryParseProjectId(r)
