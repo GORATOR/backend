@@ -102,6 +102,9 @@ func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(fmt.Sprintf("GET %s/projects", apiPrefix), crud.ReadEntities(&models.Project{}, false))
 	mux.HandleFunc(fmt.Sprintf("GET %s/envelopes", apiPrefix), crud.ReadEntities(&models.EnvelopeEventCommon{}, true))
 	mux.HandleFunc(fmt.Sprintf("%s %s/envelopes/count", http.MethodGet, apiPrefix), crud.CountEntities(&models.EnvelopeEventCommon{}, true))
+	mux.HandleFunc(fmt.Sprintf("GET %s/issues-aggregated", apiPrefix), api.IssuesAggregated)
+	mux.HandleFunc(fmt.Sprintf("GET %s/issues-aggregated/count", apiPrefix), api.IssuesAggregatedCount)
+	mux.HandleFunc(fmt.Sprintf("GET %s/issues/stats", apiPrefix), api.IssuesStats)
 	mux.HandleFunc(fmt.Sprintf("GET %s/issue/{id}", apiPrefix), crud.Read(&models.EnvelopeEventCommon{}))
 }
 

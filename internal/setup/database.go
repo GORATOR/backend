@@ -175,6 +175,11 @@ func SetupDatabase() {
 
 	tryCreateRecord(db, &models.UndefinedSdk)
 
+	// Run migration for exception fields
+	if err := MigrateExceptionFields(db); err != nil {
+		fmt.Printf("Warning: Exception fields migration failed: %v\n", err)
+	}
+
 	if config.IsDebug() {
 		org := models.Organization{
 			Name:   "Test Organization",
