@@ -2,6 +2,7 @@ package utils
 
 import (
 	"compress/gzip"
+	"github.com/andybalholm/brotli"
 	"io"
 	"net/http"
 )
@@ -16,6 +17,9 @@ func GetBodyBytes(r *http.Request) ([]byte, error) {
 		}
 		defer gzipReader.Close()
 		reader = gzipReader
+	} else if r.Header.Get("Content-Encoding") == "br" {
+		brReader := brotli.NewReader(r.Body)
+		reader = brReader
 	} else {
 		reader = r.Body
 	}
