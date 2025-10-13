@@ -196,7 +196,9 @@ func (t *Team) FindAll(query *gorm.DB, groupBy string) (interface{}, error) {
 }
 
 func (t *Team) ReadById(db *gorm.DB, id uint) (interface{}, error) {
-	return readById(db, id, t)
+	var team Team
+	result := db.Preload("Users").Preload("Organizations").Preload("Projects").Where("id = ? and active = true", id).First(&team)
+	return &team, result.Error
 }
 
 func (Team) GetAliases() []string {
