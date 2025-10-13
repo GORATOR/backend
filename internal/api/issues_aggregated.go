@@ -17,7 +17,6 @@ type AggregatedIssue struct {
 }
 
 func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
-	// Check authorization
 	_, userId := IsAuthorized(r)
 	if !(userId > 0) {
 		http.Error(w, MessageUnauthorized, http.StatusUnauthorized)
@@ -46,7 +45,6 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 
 	db := database.GetDatabaseConnection()
 
-	// Query to get aggregated issues grouped by exception type and value
 	type IssueGroup struct {
 		ExceptionType  string
 		ExceptionValue string
@@ -56,7 +54,6 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 
 	var groups []IssueGroup
 
-	// Get unique issues with counts using the new indexed columns
 	result := db.Table("envelope_event_commons").
 		Select(`
 			exception_type,
@@ -79,7 +76,6 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch full envelope data for each group
 	var issues []AggregatedIssue
 	for _, group := range groups {
 		var envelope models.EnvelopeEventCommon

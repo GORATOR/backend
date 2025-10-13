@@ -11,7 +11,6 @@ import (
 )
 
 func IssuesAggregatedCount(w http.ResponseWriter, r *http.Request) {
-	// Check authorization
 	_, userId := IsAuthorized(r)
 	if !(userId > 0) {
 		http.Error(w, MessageUnauthorized, http.StatusUnauthorized)
@@ -27,7 +26,6 @@ func IssuesAggregatedCount(w http.ResponseWriter, r *http.Request) {
 
 	var count int64
 
-	// Count unique exception types and values
 	result := db.Table("envelope_event_commons").
 		Select("COUNT(DISTINCT (exception_type, exception_value))").
 		Where("deleted_at IS NULL").
