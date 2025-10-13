@@ -30,6 +30,8 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 
 	limit := 10
 	offset := 0
+	sortBy := "first_id"
+	sortOrder := "DESC"
 
 	if limitStr := utils.GetQueryParam(r, "limit"); limitStr != "" {
 		if val, err := strconv.Atoi(limitStr); err == nil {
@@ -40,6 +42,18 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 	if offsetStr := utils.GetQueryParam(r, "offset"); offsetStr != "" {
 		if val, err := strconv.Atoi(offsetStr); err == nil {
 			offset = val
+		}
+	}
+
+	if sortByParam := utils.GetQueryParam(r, "sortBy"); sortByParam != "" {
+		if sortByParam == "count" {
+			sortBy = "count"
+		}
+	}
+
+	if sortOrderParam := utils.GetQueryParam(r, "sortOrder"); sortOrderParam != "" {
+		if sortOrderParam == "ASC" || sortOrderParam == "DESC" {
+			sortOrder = sortOrderParam
 		}
 	}
 
@@ -65,7 +79,7 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 		Where("exception_type IS NOT NULL").
 		Where("exception_type != ''").
 		Group("exception_type, exception_value").
-		Order("first_id DESC").
+		Order(sortBy + " " + sortOrder).
 		Limit(limit).
 		Offset(offset).
 		Scan(&groups)
