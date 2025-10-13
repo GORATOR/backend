@@ -81,6 +81,64 @@ func tagVisit(tags *[]models.EnvelopeTag) func(key []byte, v *fastjson.Value) {
 	}
 }
 
+func ParseException(commonRecord *models.EnvelopeEventCommon, postItems []string) error {
+	if len(postItems) < 3 {
+		return nil
+	}
+
+	var p fastjson.Parser
+	v, err := p.Parse(postItems[models.EnvelopePostItemMessage])
+	if err != nil {
+		return nil
+	}
+
+	if !v.Exists("exception") {
+		return nil
+	}
+
+	exceptionObj := v.Get("exception")
+	if exceptionObj == nil {
+		return nil
+	}
+
+	// Store full exception data as JSONB
+	commonRecord.ExceptionData = exceptionObj.String()
+
+	// Extract type and value for indexing
+	var exceptionValue *fastjson.Value
+
+	// Try format: exception[0]
+	if exceptionObj.Type() == fastjson.TypeArray {
+		arr := exceptionObj.GetArray()
+		if len(arr) > 0 {
+			exceptionValue = arr[0]
+		}
+	} else if exceptionObj.Type() == fastjson.TypeObject {
+		// Try format: exception.values[0]
+		values := exceptionObj.Get("values")
+		if values != nil && values.Type() == fastjson.TypeArray {
+			arr := values.GetArray()
+			if len(arr) > 0 {
+				exceptionValue = arr[0]
+			}
+		}
+	}
+
+	if exceptionValue != nil {
+		typeVal := exceptionValue.Get("type")
+		valueVal := exceptionValue.Get("value")
+
+		if typeVal != nil {
+			commonRecord.ExceptionType = formatValue(typeVal.String())
+		}
+		if valueVal != nil {
+			commonRecord.ExceptionValue = formatValue(valueVal.String())
+		}
+	}
+
+	return nil
+}
+
 func ParseClientReport(postItems []string) (*models.ClientReport, error) {
 	if len(postItems) < 3 {
 		return nil, fmt.Errorf("invalid client report format")
