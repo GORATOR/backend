@@ -738,6 +738,24 @@ paths:
           schema:
             $ref: '#/components/schemas/numberQueryParam'
         - in: query
+          name: sortBy
+          required: false
+          description: Field to sort by (count or first_id)
+          schema:
+            type: string
+            enum:
+              - count
+              - first_id
+        - in: query
+          name: sortOrder
+          required: false
+          description: Sort order (ASC or DESC), default DESC
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+        - in: query
           name: teamId
           required: false
           schema:
