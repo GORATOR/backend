@@ -166,7 +166,11 @@ func (o *Organization) FindAll(query *gorm.DB, groupBy string) (interface{}, err
 }
 
 func (o *Organization) ReadById(db *gorm.DB, id uint) (interface{}, error) {
-	return readById(db, id, o)
+	var org Organization
+	result := db.Preload("Teams").Preload("Users", func(db *gorm.DB) *gorm.DB {
+		return db.Omit("password")
+	}).Where("id = ? and active = true", id).First(&org)
+	return &org, result.Error
 }
 
 func (Organization) GetAliases() []string {
