@@ -3,6 +3,8 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
@@ -22,16 +24,32 @@ func IssuesAggregatedCount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var projectIds []uint
+	if projectIdsParam := utils.GetQueryParam(r, "projectIds"); projectIdsParam != "" {
+		projectIdsStr := strings.Split(projectIdsParam, ",")
+		for _, idStr := range projectIdsStr {
+			idStr = strings.TrimSpace(idStr)
+			if id, err := strconv.ParseUint(idStr, 10, 32); err == nil {
+				projectIds = append(projectIds, uint(id))
+			}
+		}
+	}
+
 	db := database.GetDatabaseConnection()
 
 	var count int64
 
-	result := db.Table("envelope_event_commons").
+	query := db.Table("envelope_event_commons").
 		Select("COUNT(DISTINCT (exception_type, exception_value))").
 		Where("deleted_at IS NULL").
 		Where("exception_type IS NOT NULL").
-		Where("exception_type != ''").
-		Count(&count)
+		Where("exception_type != ''")
+
+	if len(projectIds) > 0 {
+		query = query.Where("project_id IN ?", projectIds)
+	}
+
+	result := query.Count(&count)
 
 	if result.Error != nil {
 		fmt.Printf("Error counting aggregated issues: %v\n", result.Error)

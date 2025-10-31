@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
@@ -57,6 +58,17 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var projectIds []uint
+	if projectIdsParam := utils.GetQueryParam(r, "projectIds"); projectIdsParam != "" {
+		projectIdsStr := strings.Split(projectIdsParam, ",")
+		for _, idStr := range projectIdsStr {
+			idStr = strings.TrimSpace(idStr)
+			if id, err := strconv.ParseUint(idStr, 10, 32); err == nil {
+				projectIds = append(projectIds, uint(id))
+			}
+		}
+	}
+
 	db := database.GetDatabaseConnection()
 
 	type IssueGroup struct {
@@ -68,7 +80,7 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 
 	var groups []IssueGroup
 
-	result := db.Table("envelope_event_commons").
+	query := db.Table("envelope_event_commons").
 		Select(`
 			exception_type,
 			exception_value,
@@ -77,7 +89,13 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 		`).
 		Where("deleted_at IS NULL").
 		Where("exception_type IS NOT NULL").
-		Where("exception_type != ''").
+		Where("exception_type != ''")
+
+	if len(projectIds) > 0 {
+		query = query.Where("project_id IN ?", projectIds)
+	}
+
+	result := query.
 		Group("exception_type, exception_value").
 		Order(sortBy + " " + sortOrder).
 		Limit(limit).
