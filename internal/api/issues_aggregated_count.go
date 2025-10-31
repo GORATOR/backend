@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
@@ -35,6 +36,13 @@ func IssuesAggregatedCount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var createdAtFrom *time.Time
+	if createdAtFromParam := utils.GetQueryParam(r, "createdAtFrom"); createdAtFromParam != "" {
+		if t, err := time.Parse(time.RFC3339, createdAtFromParam); err == nil {
+			createdAtFrom = &t
+		}
+	}
+
 	db := database.GetDatabaseConnection()
 
 	var count int64
@@ -44,6 +52,10 @@ func IssuesAggregatedCount(w http.ResponseWriter, r *http.Request) {
 		Where("deleted_at IS NULL").
 		Where("exception_type IS NOT NULL").
 		Where("exception_type != ''")
+
+	if createdAtFrom != nil {
+		query = query.Where("created_at >= ?", *createdAtFrom)
+	}
 
 	if len(projectIds) > 0 {
 		query = query.Where("project_id IN ?", projectIds)
