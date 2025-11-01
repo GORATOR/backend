@@ -18,7 +18,7 @@ func Create(m models.Model) http.HandlerFunc {
 		}
 
 		if !service.HasUserAccessToByUserId(uint(userId), models.ActionCreate, m.GetName()) {
-			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
+			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionCreate), http.StatusForbidden)
 			return
 		}
 
