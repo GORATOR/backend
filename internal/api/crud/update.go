@@ -18,8 +18,8 @@ func Update(m models.Model) http.HandlerFunc {
 			return
 		}
 
-		if !service.HasUserAccessToByUserId(uint(userId), models.ActionCreate, m.GetName()) {
-			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
+		if !service.HasUserAccessToByUserId(uint(userId), models.ActionUpdate, m.GetName()) {
+			http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionUpdate), http.StatusForbidden)
 			return
 		}
 

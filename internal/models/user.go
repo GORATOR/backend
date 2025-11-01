@@ -48,6 +48,7 @@ type User struct {
 	Active        bool
 	Teams         []*Team         `gorm:"many2many:team_users;"`
 	Organizations []*Organization `gorm:"many2many:org_users;"`
+	Roles         []*Role         `gorm:"many2many:role_users;"`
 	Projects      []*Project      `gorm:"foreignKey:CreatedBy"`
 }
 
@@ -59,6 +60,7 @@ type UserInput struct {
 	Avatar          string
 	TeamIds         []uint
 	OrganizationIds []uint
+	RoleIds         []uint
 	ProjectIds      []uint
 }
 
@@ -70,6 +72,7 @@ type UserResponse struct {
 	Active        bool            `json:"active"`
 	Teams         []*Team         `json:"teams"`
 	Organizations []*Organization `json:"organizations"`
+	Roles         []*Role         `json:"roles"`
 	Projects      []*Project      `json:"projects"`
 }
 
@@ -90,6 +93,12 @@ func (u *User) ToResponse() *UserResponse {
 		copy(organizations, u.Organizations)
 	}
 
+	var roles []*Role
+	if u.Roles != nil {
+		roles = make([]*Role, len(u.Roles))
+		copy(roles, u.Roles)
+	}
+
 	var projects []*Project
 	if u.Projects != nil {
 		projects = make([]*Project, len(u.Projects))
@@ -104,6 +113,7 @@ func (u *User) ToResponse() *UserResponse {
 		Active:        u.Active,
 		Teams:         teams,
 		Organizations: organizations,
+		Roles:         roles,
 		Projects:      projects,
 	}
 }
@@ -158,6 +168,20 @@ func (u *User) CreateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, 
 			user.Organizations = orgs
 		}
 
+		if len(input.RoleIds) > 0 {
+			var roles []*Role
+			tx.Model(&user).Association(
+				bindRelatedModelsToModel(
+					tx,
+					UserModelName,
+					"role",
+					user.ID,
+					input.RoleIds,
+				),
+			).Find(&roles)
+			user.Roles = roles
+		}
+
 		return nil
 	})
 
@@ -176,6 +200,7 @@ func (u *User) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, 
 	user.SetPassword(input.Password)
 	updates := map[string]interface{}{
 		"username": input.Username,
+		"email":    input.Email,
 		"avatar":   input.Avatar,
 		"password": user.Password,
 	}
@@ -225,6 +250,24 @@ func (u *User) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{}, 
 			).Find(&teams)
 			user.Teams = teams
 		}
+
+		// Only update roles if RoleIds is explicitly provided
+		if input.RoleIds != nil {
+			tx.Exec("DELETE FROM role_users WHERE user_id = ?", input.ID)
+			if len(input.RoleIds) > 0 {
+				var roles []*Role
+				tx.Model(&user).Association(
+					bindRelatedModelsToModel(
+						tx,
+						UserModelName,
+						"role",
+						user.ID,
+						input.RoleIds,
+					),
+				).Find(&roles)
+				user.Roles = roles
+			}
+		}
 		return nil
 	})
 
@@ -271,7 +314,9 @@ func (u *User) FindAll(query *gorm.DB, groupBy string) (interface{}, error) {
 }
 
 func (u *User) ReadById(db *gorm.DB, id uint) (interface{}, error) {
-	return readById(db, id, u)
+	var user User
+	result := db.Preload("Teams").Preload("Organizations").Preload("Roles").Where("id = ? and active = true", id).First(&user)
+	return &user, result.Error
 }
 
 func (User) GetAliases() []string {
