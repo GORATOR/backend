@@ -90,13 +90,12 @@ func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(apiPrefix+"/api/{id}/envelope/", api.Envelope)
 	mux.HandleFunc(apiPrefix+"/login", api.Login)
 
-	setupEntityEndpoints(mux, &models.User{})
+	setupUserEndpoints(mux)
 	setupEntityEndpoints(mux, &models.Organization{})
 	setupEntityEndpoints(mux, &models.Team{})
 	setupEntityEndpoints(mux, &models.Project{})
 
 	mux.HandleFunc(fmt.Sprintf("GET %s/user/current", apiPrefix), api.UserCurrent)
-	mux.HandleFunc(fmt.Sprintf("GET %s/users", apiPrefix), crud.ReadEntities(&models.User{}, false))
 	mux.HandleFunc(fmt.Sprintf("GET %s/teams", apiPrefix), crud.ReadEntities(&models.Team{}, false))
 	mux.HandleFunc(fmt.Sprintf("GET %s/organizations", apiPrefix), crud.ReadEntities(&models.Organization{}, false))
 	mux.HandleFunc(fmt.Sprintf("GET %s/projects", apiPrefix), crud.ReadEntities(&models.Project{}, false))
@@ -106,6 +105,16 @@ func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(fmt.Sprintf("GET %s/issues-aggregated/count", apiPrefix), api.IssuesAggregatedCount)
 	mux.HandleFunc(fmt.Sprintf("GET %s/issues/stats", apiPrefix), api.IssuesStats)
 	mux.HandleFunc(fmt.Sprintf("GET %s/issue/{id}", apiPrefix), crud.Read(&models.EnvelopeEventCommon{}))
+}
+
+func setupUserEndpoints(mux *http.ServeMux) {
+	userModel := &models.User{}
+	mux.HandleFunc(fmt.Sprintf("%s %s/user", http.MethodPut, apiPrefix), crud.UserUpdate(userModel))
+	mux.HandleFunc(fmt.Sprintf("%s %s/user", http.MethodPost, apiPrefix), crud.UserCreate(userModel))
+	mux.HandleFunc(fmt.Sprintf("%s %s/user/{id}", http.MethodGet, apiPrefix), crud.UserRead(userModel))
+	mux.HandleFunc(fmt.Sprintf("%s %s/users", http.MethodGet, apiPrefix), crud.UserReadEntities(userModel, false))
+	mux.HandleFunc(fmt.Sprintf("%s %s/users/count", http.MethodGet, apiPrefix), crud.UserCountEntities(userModel, false))
+	mux.HandleFunc(fmt.Sprintf("%s %s/user/{id}", http.MethodDelete, apiPrefix), crud.UserDelete(userModel))
 }
 
 func setupEntityEndpoints(mux *http.ServeMux, m models.Model) {
