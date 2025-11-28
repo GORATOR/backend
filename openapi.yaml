@@ -224,7 +224,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Project'                
+                $ref: '#/components/schemas/Project'
         '400':
           description: Bad request
         '500':
@@ -246,7 +246,52 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Project'                
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  '/role':
+    post:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleInput'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleDetailed'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    put:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleInput'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleDetailed'
         '400':
           description: Bad request
         '500':
@@ -282,13 +327,13 @@ paths:
           description: Internal server error 
   '/project/{id}':
     delete:
-      tags: 
+      tags:
         - "entity"
       security:
         - cookieAuth: []
       responses:
         '204':
-          description: success   
+          description: success
         '400':
           description: Bad request
         '500':
@@ -297,18 +342,47 @@ paths:
       tags:
         - "entity"
       security:
-        - cookieAuth: []  
+        - cookieAuth: []
       responses:
         '200':
           description: todo
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Project'                
+                $ref: '#/components/schemas/Project'
         '400':
           description: Bad request
         '500':
-          description: Internal server error 
+          description: Internal server error
+  '/role/{id}':
+    delete:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: success
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleDetailed'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
   '/organizations':
     get:
       tags:
@@ -473,22 +547,22 @@ paths:
         - in: query
           name: name
           required: false
-          schema: 
+          schema:
             $ref: '#/components/schemas/stringQueryParam'
         - in: query
           name: limit
           required: false
-          schema: 
+          schema:
             $ref: '#/components/schemas/numberQueryParam'
         - in: query
           name: offset
           required: false
-          schema: 
+          schema:
             $ref: '#/components/schemas/numberQueryParam'
         - in: query
           name: teamId
           required: false
-          schema: 
+          schema:
             $ref: '#/components/schemas/numberQueryParam'
       responses:
         '200':
@@ -498,7 +572,42 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/OrganizationDetailed'                
+                  $ref: '#/components/schemas/OrganizationDetailed'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  '/roles':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: name
+          required: false
+          schema:
+            $ref: '#/components/schemas/stringQueryParam'
+        - in: query
+          name: limit
+          required: false
+          schema:
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: offset
+          required: false
+          schema:
+            $ref: '#/components/schemas/numberQueryParam'
+      responses:
+        '200':
+          description: todo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoleDetailed'
         '400':
           description: Bad request
         '500':
@@ -1102,6 +1211,74 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Team'
+    RuleInput:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [create, read, update, delete]
+        allowed:
+          type: boolean
+        table:
+          type: string
+          enum: [roles, teams, projects, organizations, users, envelope_event_commons]
+      required:
+        - action
+        - allowed
+        - table
+    Rule:
+      type: object
+      properties:
+        id:
+          type: integer
+        action:
+          type: string
+          enum: [create, read, update, delete]
+        allowed:
+          type: boolean
+        table:
+          type: string
+          enum: [roles, teams, projects, organizations, users, envelope_event_commons]
+    RoleInput:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        userIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleInput'
+    Role:
+      type: object
+      properties:
+        name:
+          type: string
+        active:
+          type: boolean
+    RoleDetailed:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        active:
+          type: boolean
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rule'
     Envelopes:
       type: array
       items:

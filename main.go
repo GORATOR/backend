@@ -94,11 +94,13 @@ func setupRouter(mux *http.ServeMux) {
 	setupEntityEndpoints(mux, &models.Organization{})
 	setupEntityEndpoints(mux, &models.Team{})
 	setupEntityEndpoints(mux, &models.Project{})
+	setupEntityEndpoints(mux, &models.Role{})
 
 	mux.HandleFunc(fmt.Sprintf("GET %s/user/current", apiPrefix), api.UserCurrent)
 	mux.HandleFunc(fmt.Sprintf("GET %s/teams", apiPrefix), crud.ReadEntities(&models.Team{}, false))
 	mux.HandleFunc(fmt.Sprintf("GET %s/organizations", apiPrefix), crud.ReadEntities(&models.Organization{}, false))
 	mux.HandleFunc(fmt.Sprintf("GET %s/projects", apiPrefix), crud.ReadEntities(&models.Project{}, false))
+	mux.HandleFunc(fmt.Sprintf("GET %s/roles", apiPrefix), crud.ReadEntities(&models.Role{}, false))
 	mux.HandleFunc(fmt.Sprintf("GET %s/envelopes", apiPrefix), crud.ReadEntities(&models.EnvelopeEventCommon{}, true))
 	mux.HandleFunc(fmt.Sprintf("%s %s/envelopes/count", http.MethodGet, apiPrefix), crud.CountEntities(&models.EnvelopeEventCommon{}, true))
 	mux.HandleFunc(fmt.Sprintf("GET %s/issues-aggregated", apiPrefix), api.IssuesAggregated)

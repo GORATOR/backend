@@ -28,8 +28,9 @@ func tryCreateRecord(db *gorm.DB, value interface{}) {
 
 func setupRole(name string, db *gorm.DB, user *models.User, cb RoleRulesCallback) {
 	role := models.Role{
-		Name:  name,
-		Users: []*models.User{user},
+		Name:   name,
+		Active: true,
+		Users:  []*models.User{user},
 	}
 	tryCreateRecord(db, &role)
 	for _, entity := range []string{
@@ -38,6 +39,7 @@ func setupRole(name string, db *gorm.DB, user *models.User, cb RoleRulesCallback
 		models.OrganizationModelName,
 		models.ProjectModelName,
 		models.EnvelopeEventCommonModelName,
+		models.RoleModelName,
 	} {
 		cb(db, role, entity+"s")
 	}
@@ -193,10 +195,10 @@ func SetupDatabase() {
 			Active:        true,
 		}
 		tryCreateRecord(db, &team)
-
 		userAdmin := tryCreateUser(db, "user1@email.com", "userAdmin", team, org)
 		userViewer := tryCreateUser(db, "user2@email.com", "userViewer", team, org)
 		if userAdmin != nil && userViewer != nil {
+			db.Exec("TRUNCATE TABLE rules, role_users, roles RESTART IDENTITY")
 			setupRoles(db, userAdmin, userViewer)
 		}
 	}
