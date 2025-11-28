@@ -10,7 +10,7 @@ import (
 )
 
 type GenericModel interface {
-	User | Organization | Team | Project
+	User | Organization | Team | Project | Role
 }
 
 type ChangableModel interface {
