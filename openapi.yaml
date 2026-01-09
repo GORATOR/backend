@@ -1052,6 +1052,11 @@ components:
           items:
             type: integer
             minimum: 1
+        roleIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
     User:
       type: object
       properties:
