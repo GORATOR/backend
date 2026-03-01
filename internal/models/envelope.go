@@ -65,6 +65,7 @@ type EnvelopeEventCommon struct {
 	ExceptionType       string               `json:"exception_type" gorm:"type:text;index:idx_exception_type_value"`
 	ExceptionValue      string               `json:"exception_value" gorm:"type:text;index:idx_exception_type_value"`
 	ExceptionData       string               `json:"exception_data" gorm:"type:jsonb"`
+	ExtraData           string               `json:"extra_data" gorm:"type:jsonb"`
 }
 
 type EnvelopeRequestType struct {
