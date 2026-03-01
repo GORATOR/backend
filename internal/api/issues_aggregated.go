@@ -32,7 +32,7 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 
 	limit := 10
 	offset := 0
-	sortBy := "first_id"
+	sortBy := "last_id"
 	sortOrder := "DESC"
 
 	if limitStr := utils.GetQueryParam(r, "limit"); limitStr != "" {
@@ -83,7 +83,7 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 		ExceptionType  string
 		ExceptionValue string
 		Count          int64
-		FirstID        uint
+		LastID         uint
 	}
 
 	var groups []IssueGroup
@@ -93,7 +93,7 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 			exception_type,
 			exception_value,
 			COUNT(*) as count,
-			MIN(id) as first_id
+			MAX(id) as last_id
 		`).
 		Where("deleted_at IS NULL").
 		Where("exception_type IS NOT NULL").
@@ -123,14 +123,14 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 	var issues []AggregatedIssue
 	for _, group := range groups {
 		var envelope models.EnvelopeEventCommon
-		err := db.Where("id = ?", group.FirstID).
+		err := db.Where("id = ?", group.LastID).
 			Preload("EventCommonSdk").
 			Preload("EnvelopeEventExtras").
 			Preload("Project").
 			First(&envelope).Error
 
 		if err != nil {
-			fmt.Printf("Error loading envelope %d: %v\n", group.FirstID, err)
+			fmt.Printf("Error loading envelope %d: %v\n", group.LastID, err)
 			continue
 		}
 

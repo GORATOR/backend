@@ -139,6 +139,30 @@ func ParseException(commonRecord *models.EnvelopeEventCommon, postItems []string
 	return nil
 }
 
+func ParseExtra(commonRecord *models.EnvelopeEventCommon, postItems []string) error {
+	if len(postItems) < 3 {
+		return nil
+	}
+
+	var p fastjson.Parser
+	v, err := p.Parse(postItems[models.EnvelopePostItemMessage])
+	if err != nil {
+		return nil
+	}
+
+	if !v.Exists("extra") {
+		return nil
+	}
+
+	extraObj := v.Get("extra")
+	if extraObj == nil {
+		return nil
+	}
+
+	commonRecord.ExtraData = extraObj.String()
+	return nil
+}
+
 func ParseClientReport(postItems []string) (*models.ClientReport, error) {
 	if len(postItems) < 3 {
 		return nil, fmt.Errorf("invalid client report format")

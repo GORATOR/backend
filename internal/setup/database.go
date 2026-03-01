@@ -182,6 +182,10 @@ func SetupDatabase() {
 		fmt.Printf("Warning: Exception fields migration failed: %v\n", err)
 	}
 
+	if err := MigrateExtraField(db); err != nil {
+		fmt.Printf("Warning: Extra field migration failed: %v\n", err)
+	}
+
 	if config.IsDebug() {
 		org := models.Organization{
 			Name:   "Test Organization",
