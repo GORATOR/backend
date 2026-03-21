@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -206,6 +207,28 @@ func (e *EnvelopeEventCommon) ParseQueryString(endpoint string, query *gorm.DB, 
 	parseQueryParam(query, r, "projectId", "project_id", "=")
 	parseQueryParam(query, r, "createdAtFrom", "created_at", ">=")
 	parseQueryParam(query, r, "createdAtTo", "created_at", "<=")
+
+	if projectIdsParam := utils.GetQueryParam(r, "projectIds"); projectIdsParam != "" {
+		var projectIds []uint
+		for _, idStr := range strings.Split(projectIdsParam, ",") {
+			idStr = strings.TrimSpace(idStr)
+			if id, err := strconv.ParseUint(idStr, 10, 32); err == nil {
+				projectIds = append(projectIds, uint(id))
+			}
+		}
+		if len(projectIds) > 0 {
+			query.Where("project_id IN ?", projectIds)
+		}
+	}
+
+	if eventType := utils.GetQueryParam(r, "eventType"); eventType != "" {
+		switch eventType {
+		case "exception":
+			query.Where("exception_type IS NOT NULL AND exception_type != ''")
+		case "message":
+			query.Where("(exception_type IS NULL OR exception_type = '') AND message IS NOT NULL AND message != ''")
+		}
+	}
 
 	parseQueryParamIn(query, r, "userId", "project_id IN ?", getUserProjectIDs)
 	parseQueryParamIn(query, r, "teamId", "project_id IN ?", getTeamProjectIDs)
