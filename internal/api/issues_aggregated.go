@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -14,8 +15,18 @@ import (
 )
 
 type AggregatedIssue struct {
-	Envelope models.EnvelopeEventCommon `json:"envelope"`
-	Count    int64                      `json:"count"`
+	Envelope  models.EnvelopeEventCommon `json:"envelope"`
+	Count     int64                      `json:"count"`
+	EventType string                     `json:"event_type"`
+}
+
+type issueGroup struct {
+	ExceptionType  string
+	ExceptionValue string
+	Message        string
+	Level          string
+	Count          int64
+	LastID         uint
 }
 
 func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
@@ -77,51 +88,81 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	eventTypeFilter := utils.GetQueryParam(r, "eventType")
+
 	db := database.GetDatabaseConnection()
 
-	type IssueGroup struct {
-		ExceptionType  string
-		ExceptionValue string
-		Count          int64
-		LastID         uint
-	}
+	var exceptionGroups []issueGroup
+	var messageGroups []issueGroup
 
-	var groups []IssueGroup
-
-	query := db.Table("envelope_event_commons").
-		Select(`
-			exception_type,
-			exception_value,
-			COUNT(*) as count,
-			MAX(id) as last_id
-		`).
+	// --- exceptions ---
+	exceptionQuery := db.Table("envelope_event_commons").
+		Select(`exception_type, exception_value, '' as message, '' as level, COUNT(*) as count, MAX(id) as last_id`).
 		Where("deleted_at IS NULL").
-		Where("exception_type IS NOT NULL").
-		Where("exception_type != ''")
+		Where("exception_type IS NOT NULL AND exception_type != ''")
 
 	if createdAtFrom != nil {
-		query = query.Where("created_at >= ?", *createdAtFrom)
+		exceptionQuery = exceptionQuery.Where("created_at >= ?", *createdAtFrom)
 	}
-
 	if len(projectIds) > 0 {
-		query = query.Where("project_id IN ?", projectIds)
+		exceptionQuery = exceptionQuery.Where("project_id IN ?", projectIds)
 	}
 
-	result := query.
-		Group("exception_type, exception_value").
-		Order(sortBy + " " + sortOrder).
-		Limit(limit).
-		Offset(offset).
-		Scan(&groups)
-
-	if result.Error != nil {
-		fmt.Printf("Error querying aggregated issues: %v\n", result.Error)
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		return
+	if eventTypeFilter != EventTypeMessage {
+		if result := exceptionQuery.Group("exception_type, exception_value").Scan(&exceptionGroups); result.Error != nil {
+			fmt.Printf("Error querying exception groups: %v\n", result.Error)
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
 	}
 
-	var issues []AggregatedIssue
-	for _, group := range groups {
+	// --- messages ---
+	if eventTypeFilter != EventTypeException {
+		messageQuery := db.Table("envelope_event_commons").
+			Select(`'' as exception_type, '' as exception_value, message, level, COUNT(*) as count, MAX(id) as last_id`).
+			Where("deleted_at IS NULL").
+			Where("(exception_type IS NULL OR exception_type = '') AND message IS NOT NULL AND message != ''")
+
+		if createdAtFrom != nil {
+			messageQuery = messageQuery.Where("created_at >= ?", *createdAtFrom)
+		}
+		if len(projectIds) > 0 {
+			messageQuery = messageQuery.Where("project_id IN ?", projectIds)
+		}
+
+		if result := messageQuery.Group("message, level").Scan(&messageGroups); result.Error != nil {
+			fmt.Printf("Error querying message groups: %v\n", result.Error)
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	allGroups := append(exceptionGroups, messageGroups...)
+
+	sort.Slice(allGroups, func(i, j int) bool {
+		var less bool
+		if sortBy == "count" {
+			less = allGroups[i].Count < allGroups[j].Count
+		} else {
+			less = allGroups[i].LastID < allGroups[j].LastID
+		}
+		if sortOrder == "DESC" {
+			return !less
+		}
+		return less
+	})
+
+	if offset < len(allGroups) {
+		allGroups = allGroups[offset:]
+	} else {
+		allGroups = nil
+	}
+	if limit < len(allGroups) {
+		allGroups = allGroups[:limit]
+	}
+
+	issues := make([]AggregatedIssue, 0)
+	for _, group := range allGroups {
 		var envelope models.EnvelopeEventCommon
 		err := db.Where("id = ?", group.LastID).
 			Preload("EventCommonSdk").
@@ -134,9 +175,15 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		eventType := EventTypeException
+		if group.ExceptionType == "" {
+			eventType = EventTypeMessage
+		}
+
 		issues = append(issues, AggregatedIssue{
-			Envelope: envelope,
-			Count:    group.Count,
+			Envelope:  envelope,
+			Count:     group.Count,
+			EventType: eventType,
 		})
 	}
 

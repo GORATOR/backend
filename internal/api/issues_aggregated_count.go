@@ -43,31 +43,54 @@ func IssuesAggregatedCount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	eventTypeFilter := utils.GetQueryParam(r, "eventType")
+
 	db := database.GetDatabaseConnection()
 
-	var count int64
+	var exceptionCount int64
+	var messageCount int64
 
-	query := db.Table("envelope_event_commons").
+	exceptionQuery := db.Table("envelope_event_commons").
 		Select("COUNT(DISTINCT (exception_type, exception_value))").
 		Where("deleted_at IS NULL").
-		Where("exception_type IS NOT NULL").
-		Where("exception_type != ''")
+		Where("exception_type IS NOT NULL AND exception_type != ''")
 
 	if createdAtFrom != nil {
-		query = query.Where("created_at >= ?", *createdAtFrom)
+		exceptionQuery = exceptionQuery.Where("created_at >= ?", *createdAtFrom)
 	}
-
 	if len(projectIds) > 0 {
-		query = query.Where("project_id IN ?", projectIds)
+		exceptionQuery = exceptionQuery.Where("project_id IN ?", projectIds)
 	}
 
-	result := query.Count(&count)
-
-	if result.Error != nil {
-		fmt.Printf("Error counting aggregated issues: %v\n", result.Error)
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		return
+	if eventTypeFilter != EventTypeMessage {
+		if result := exceptionQuery.Scan(&exceptionCount); result.Error != nil {
+			fmt.Printf("Error counting exception groups: %v\n", result.Error)
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
 	}
+
+	if eventTypeFilter != EventTypeException {
+		messageQuery := db.Table("envelope_event_commons").
+			Select("COUNT(DISTINCT message)").
+			Where("deleted_at IS NULL").
+			Where("(exception_type IS NULL OR exception_type = '') AND message IS NOT NULL AND message != ''")
+
+		if createdAtFrom != nil {
+			messageQuery = messageQuery.Where("created_at >= ?", *createdAtFrom)
+		}
+		if len(projectIds) > 0 {
+			messageQuery = messageQuery.Where("project_id IN ?", projectIds)
+		}
+
+		if result := messageQuery.Scan(&messageCount); result.Error != nil {
+			fmt.Printf("Error counting message groups: %v\n", result.Error)
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	count := exceptionCount + messageCount
 
 	response := models.ModelCountResponse{
 		Count:  count,

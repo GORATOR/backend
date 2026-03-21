@@ -27,10 +27,10 @@ func ParseSDK(commonRecord *models.EnvelopeEventCommon, postItems []string) erro
 					commonRecord.EventCommonSdk = &models.EventCommonSdk{}
 				}
 				if name != nil {
-					commonRecord.EventCommonSdk.Name = formatValue(name.String())
+					commonRecord.EventCommonSdk.Name = string(name.GetStringBytes())
 				}
 				if version != nil {
-					commonRecord.EventCommonSdk.Version = formatValue(version.String())
+					commonRecord.EventCommonSdk.Version = string(version.GetStringBytes())
 				}
 			}
 		}
@@ -65,17 +65,13 @@ func isSdkEmpty(commonRecord *models.EnvelopeEventCommon) bool {
 	return commonRecord.EventCommonSdk == nil || (commonRecord.EventCommonSdk.Version == "" && commonRecord.EventCommonSdk.Name == "")
 }
 
-func formatValue(val string) string {
-	return strings.ReplaceAll(val, "\"", "")
-}
-
 func tagVisit(tags *[]models.EnvelopeTag) func(key []byte, v *fastjson.Value) {
 	return func(key []byte, v *fastjson.Value) {
 		*tags = append(
 			*tags,
 			models.EnvelopeTag{
 				Name:  string(key),
-				Value: strings.Trim(v.String(), "\""),
+				Value: string(v.GetStringBytes()),
 			},
 		)
 	}
@@ -130,10 +126,10 @@ func ParseException(commonRecord *models.EnvelopeEventCommon, postItems []string
 		valueVal := exceptionValue.Get("value")
 
 		if typeVal != nil {
-			commonRecord.ExceptionType = formatValue(typeVal.String())
+			commonRecord.ExceptionType = string(typeVal.GetStringBytes())
 		}
 		if valueVal != nil {
-			commonRecord.ExceptionValue = formatValue(valueVal.String())
+			commonRecord.ExceptionValue = string(valueVal.GetStringBytes())
 		}
 	}
 
@@ -165,6 +161,27 @@ func ParseExtra(commonRecord *models.EnvelopeEventCommon, postItems []string) er
 	return nil
 }
 
+func ParseMessage(commonRecord *models.EnvelopeEventCommon, postItems []string) error {
+	if len(postItems) < 3 {
+		return nil
+	}
+
+	var p fastjson.Parser
+	v, err := p.Parse(postItems[models.EnvelopePostItemMessage])
+	if err != nil {
+		return nil
+	}
+
+	if v.Exists("message") {
+		commonRecord.Message = string(v.Get("message").GetStringBytes())
+	}
+	if v.Exists("level") {
+		commonRecord.Level = string(v.Get("level").GetStringBytes())
+	}
+
+	return nil
+}
+
 func ParseClientReport(postItems []string) (*models.ClientReport, error) {
 	if len(postItems) < 3 {
 		return nil, fmt.Errorf("invalid client report format")
@@ -176,4 +193,10 @@ func ParseClientReport(postItems []string) (*models.ClientReport, error) {
 	}
 
 	return &report, nil
+}
+
+// formatValue is no longer used but kept for reference.
+// Use string(val.GetStringBytes()) to correctly decode unicode escapes.
+func formatValue(val string) string {
+	return strings.ReplaceAll(val, "\"", "")
 }
