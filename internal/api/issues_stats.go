@@ -102,12 +102,21 @@ func IssuesStats(w http.ResponseWriter, r *http.Request) {
 
 	var stats []IssueStatEntry
 
+	eventTypeFilter := utils.GetQueryParam(r, "eventType")
+
 	// Build query with optional project filter
 	queryBuilder := db.Table("envelope_event_commons").
 		Select(fmt.Sprintf("%s as date, COUNT(*) as count", sqlInterval)).
 		Where("deleted_at IS NULL").
 		Where("created_at >= ?", startDate).
 		Where("created_at <= ?", endDate)
+
+	switch eventTypeFilter {
+	case EventTypeException:
+		queryBuilder = queryBuilder.Where("exception_type IS NOT NULL AND exception_type != ''")
+	case EventTypeMessage:
+		queryBuilder = queryBuilder.Where("exception_type IS NULL OR exception_type = ''")
+	}
 
 	// Apply project filter if projectIds are provided
 	if len(projectIds) > 0 {

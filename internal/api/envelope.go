@@ -64,6 +64,12 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = service.ParseMessage(&commonRecord, postItems)
+	if err != nil {
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
 	if commonRecord.EventId == "" {
 		utils.HttpReturnBadRequest(w)
 		return
