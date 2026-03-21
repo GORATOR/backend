@@ -102,7 +102,8 @@ func ParseException(commonRecord *models.EnvelopeEventCommon, postItems []string
 	}
 
 	// Store full exception data as JSONB
-	commonRecord.ExceptionData = exceptionObj.String()
+	exceptionData := exceptionObj.String()
+	commonRecord.ExceptionData = &exceptionData
 
 	// Extract type and value for indexing
 	var exceptionValue *fastjson.Value
@@ -159,7 +160,8 @@ func ParseExtra(commonRecord *models.EnvelopeEventCommon, postItems []string) er
 		return nil
 	}
 
-	commonRecord.ExtraData = extraObj.String()
+	extraData := extraObj.String()
+	commonRecord.ExtraData = &extraData
 	return nil
 }
 

@@ -5,8 +5,25 @@ import (
 	"fmt"
 
 	"github.com/GORATOR/backend/internal/models"
+	"github.com/valyala/fastjson"
 	"gorm.io/gorm"
 )
+
+type envelopeEventType int
+
+const (
+	envelopeEventTypeException envelopeEventType = iota
+	envelopeEventTypeMessage
+)
+
+func detectEnvelopeEventType(postItems []string) envelopeEventType {
+	var p fastjson.Parser
+	v, err := p.Parse(postItems[models.EnvelopePostItemMessage])
+	if err == nil && v.Exists("exception") {
+		return envelopeEventTypeException
+	}
+	return envelopeEventTypeMessage
+}
 
 func EnvelopeSaveData(commonRecord *models.EnvelopeEventCommon, postItems []string, tags *[]models.EnvelopeTag) error {
 	sdkResult := postgresConnection.Where(
@@ -25,25 +42,44 @@ func EnvelopeSaveData(commonRecord *models.EnvelopeEventCommon, postItems []stri
 		}
 	}
 	commonRecord.EventCommonSdkID = &commonRecord.EventCommonSdk.ID
+
+	switch detectEnvelopeEventType(postItems) {
+	case envelopeEventTypeException:
+		return saveExceptionEvent(commonRecord, postItems, tags)
+	default:
+		return saveMessageEvent(commonRecord, postItems, tags)
+	}
+}
+
+func saveExceptionEvent(commonRecord *models.EnvelopeEventCommon, postItems []string, tags *[]models.EnvelopeTag) error {
 	commonResult := postgresConnection.Create(&commonRecord)
 	if commonResult.Error != nil {
 		return commonResult.Error
 	}
 	extraRecords := []*models.EnvelopeEventExtra{
-		{
-			EnvelopeEventCommonID: commonRecord.ID,
-			Data:                  postItems[1],
-		},
-		{
-			EnvelopeEventCommonID: commonRecord.ID,
-			Data:                  postItems[2],
-		},
+		{EnvelopeEventCommonID: commonRecord.ID, Data: postItems[1]},
+		{EnvelopeEventCommonID: commonRecord.ID, Data: postItems[2]},
 	}
 	extraResult := postgresConnection.Create(&extraRecords)
 	if extraResult.Error != nil {
 		return extraResult.Error
 	}
+	return bindTags(commonRecord, tags)
+}
 
+func saveMessageEvent(commonRecord *models.EnvelopeEventCommon, postItems []string, tags *[]models.EnvelopeTag) error {
+	commonResult := postgresConnection.Create(&commonRecord)
+	if commonResult.Error != nil {
+		return commonResult.Error
+	}
+	extraRecords := []*models.EnvelopeEventExtra{
+		{EnvelopeEventCommonID: commonRecord.ID, Data: postItems[1]},
+		{EnvelopeEventCommonID: commonRecord.ID, Data: postItems[2]},
+	}
+	extraResult := postgresConnection.Create(&extraRecords)
+	if extraResult.Error != nil {
+		return extraResult.Error
+	}
 	return bindTags(commonRecord, tags)
 }
 
