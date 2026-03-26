@@ -1,6 +1,8 @@
 package service
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -133,7 +135,54 @@ func ParseException(commonRecord *models.EnvelopeEventCommon, postItems []string
 		}
 	}
 
+	commonRecord.StacktraceHash = ComputeStacktraceHash(exceptionObj)
+
 	return nil
+}
+
+// ComputeStacktraceHash builds a fingerprint from exception type/module and frame
+// structure (filename, function, lineno) — variable values are excluded.
+func ComputeStacktraceHash(exceptionObj *fastjson.Value) string {
+	if exceptionObj == nil {
+		return ""
+	}
+
+	var parts []string
+
+	var values []*fastjson.Value
+	if exceptionObj.Type() == fastjson.TypeArray {
+		values = exceptionObj.GetArray()
+	} else if exceptionObj.Type() == fastjson.TypeObject {
+		v := exceptionObj.Get("values")
+		if v != nil && v.Type() == fastjson.TypeArray {
+			values = v.GetArray()
+		}
+	}
+
+	for _, exc := range values {
+		excType := string(exc.GetStringBytes("type"))
+		excModule := string(exc.GetStringBytes("module"))
+		parts = append(parts, excType+":"+excModule)
+
+		stacktrace := exc.Get("stacktrace")
+		if stacktrace == nil {
+			continue
+		}
+		frames := stacktrace.GetArray("frames")
+		for _, frame := range frames {
+			filename := string(frame.GetStringBytes("filename"))
+			function := string(frame.GetStringBytes("function"))
+			lineno := frame.GetInt("lineno")
+			parts = append(parts, fmt.Sprintf("%s:%s:%d", filename, function, lineno))
+		}
+	}
+
+	if len(parts) == 0 {
+		return ""
+	}
+
+	sum := sha256.Sum256([]byte(strings.Join(parts, "|")))
+	return hex.EncodeToString(sum[:])
 }
 
 func ParseExtra(commonRecord *models.EnvelopeEventCommon, postItems []string) error {

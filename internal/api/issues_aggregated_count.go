@@ -51,7 +51,7 @@ func IssuesAggregatedCount(w http.ResponseWriter, r *http.Request) {
 	var messageCount int64
 
 	exceptionQuery := db.Table("envelope_event_commons").
-		Select("COUNT(DISTINCT (exception_type, exception_value))").
+		Select("COUNT(DISTINCT (exception_type, COALESCE(NULLIF(stacktrace_hash, ''), exception_value)))").
 		Where("deleted_at IS NULL").
 		Where("exception_type IS NOT NULL AND exception_type != ''")
 
