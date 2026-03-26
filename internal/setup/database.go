@@ -186,6 +186,10 @@ func SetupDatabase() {
 		fmt.Printf("Warning: Extra field migration failed: %v\n", err)
 	}
 
+	if err := MigrateStacktraceHash(db); err != nil {
+		fmt.Printf("Warning: Stacktrace hash migration failed: %v\n", err)
+	}
+
 	if config.IsDebug() {
 		org := models.Organization{
 			Name:   "Test Organization",

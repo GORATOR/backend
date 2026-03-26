@@ -97,7 +97,7 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 
 	// --- exceptions ---
 	exceptionQuery := db.Table("envelope_event_commons").
-		Select(`exception_type, exception_value, '' as message, '' as level, COUNT(*) as count, MAX(id) as last_id`).
+		Select(`exception_type, MIN(exception_value) as exception_value, '' as message, '' as level, COUNT(*) as count, MAX(id) as last_id`).
 		Where("deleted_at IS NULL").
 		Where("exception_type IS NOT NULL AND exception_type != ''")
 
@@ -109,7 +109,8 @@ func IssuesAggregated(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if eventTypeFilter != EventTypeMessage {
-		if result := exceptionQuery.Group("exception_type, exception_value").Scan(&exceptionGroups); result.Error != nil {
+		groupExpr := "exception_type, COALESCE(NULLIF(stacktrace_hash, ''), exception_value)"
+		if result := exceptionQuery.Group(groupExpr).Scan(&exceptionGroups); result.Error != nil {
 			fmt.Printf("Error querying exception groups: %v\n", result.Error)
 			http.Error(w, "Database error", http.StatusInternalServerError)
 			return
