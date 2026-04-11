@@ -827,6 +827,138 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
+  '/issue/{id}/events':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID of any event from the group
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          required: false
+          description: default 10
+          schema:
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: offset
+          required: false
+          description: default 0
+          schema:
+            $ref: '#/components/schemas/numberQueryParam'
+        - in: query
+          name: sortOrder
+          required: false
+          description: Sort order by created_at (ASC or DESC), default DESC
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+        - in: query
+          name: createdAtFrom
+          required: false
+          description: Filter events created after this date (RFC3339)
+          schema:
+            $ref: '#/components/schemas/stringQueryParam'
+        - in: query
+          name: createdAtTo
+          required: false
+          description: Filter events created before this date (RFC3339)
+          schema:
+            $ref: '#/components/schemas/stringQueryParam'
+      responses:
+        '200':
+          description: List of all occurrences (events) belonging to the same issue group
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Envelope'
+        '400':
+          description: Bad request
+        '404':
+          description: Event not found
+        '500':
+          description: Internal server error
+  '/issue/{id}/events/count':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID of any event from the group
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Count of all occurrences belonging to the same issue group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityCountResponse'
+        '400':
+          description: Bad request
+        '404':
+          description: Event not found
+        '500':
+          description: Internal server error
+  '/issue/{id}/events/stats':
+    get:
+      tags:
+        - "entity"
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID of any event from the group
+          schema:
+            type: integer
+        - in: query
+          name: interval
+          required: false
+          description: Time interval for grouping (minute, hour, day, week), default day
+          schema:
+            type: string
+            enum:
+              - minute
+              - hour
+              - day
+              - week
+        - in: query
+          name: periods
+          required: false
+          description: Number of intervals to return (default 14, max 1000)
+          schema:
+            $ref: '#/components/schemas/numberQueryParam'
+      responses:
+        '200':
+          description: Time-series event statistics for a single issue group
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IssueStatEntry'
+        '400':
+          description: Bad request
+        '404':
+          description: Event not found
+        '500':
+          description: Internal server error
   '/issues-aggregated':
     get:
       tags:
