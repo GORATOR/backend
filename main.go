@@ -22,7 +22,7 @@ var (
 	apiPrefix     = utils.StringFromEnv(varPrefix+"API_PREFIX", "")
 	appPort       = utils.StringFromEnv(varPrefix+"APP_PORT", "8080")
 	allowedOrigin = utils.StringFromEnv(varPrefix+"ALLOWED_ORIGIN", "http://localhost:4000")
-	dbHostname    = utils.StringFromEnv(varPrefix+"DB_HOSTNAME", "localhost")
+	dbHostname    = utils.StringFromEnv(varPrefix+"DB_HOSTNAME", "127.0.0.1")
 	dbPort        = utils.StringFromEnv(varPrefix+"DB_PORT", "5432")
 	dbUsername    = utils.StringFromEnv(varPrefix+"DB_USERNAME", "postgres")
 	dbPassword    = utils.StringFromEnv(varPrefix+"DB_PASSWORD", "postgres")
@@ -107,6 +107,9 @@ func setupRouter(mux *http.ServeMux) {
 	mux.HandleFunc(fmt.Sprintf("GET %s/issues-aggregated/count", apiPrefix), api.IssuesAggregatedCount)
 	mux.HandleFunc(fmt.Sprintf("GET %s/issues/stats", apiPrefix), api.IssuesStats)
 	mux.HandleFunc(fmt.Sprintf("GET %s/issue/{id}", apiPrefix), crud.Read(&models.EnvelopeEventCommon{}))
+	mux.HandleFunc(fmt.Sprintf("GET %s/issue/{id}/events", apiPrefix), api.IssueEvents)
+	mux.HandleFunc(fmt.Sprintf("GET %s/issue/{id}/events/count", apiPrefix), api.IssueEventsCount)
+	mux.HandleFunc(fmt.Sprintf("GET %s/issue/{id}/events/stats", apiPrefix), api.IssueEventsStats)
 }
 
 func setupUserEndpoints(mux *http.ServeMux) {
