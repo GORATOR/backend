@@ -1,7 +1,5 @@
 package models
 
-import "encoding/json"
-
 type ClientReportHeader struct {
 	Type string `json:"type"`
 }
@@ -29,14 +27,6 @@ func (c *ClientReport) GetName() string {
 }
 
 func IsClientReport(postItems []string) bool {
-	if len(postItems) < 2 {
-		return false
-	}
-
-	var header ClientReportHeader
-	if err := json.Unmarshal([]byte(postItems[1]), &header); err != nil {
-		return false
-	}
-
-	return header.Type == "client_report"
+	_, ok := FindEnvelopeItemPayload(postItems, "client_report")
+	return ok
 }
