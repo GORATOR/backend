@@ -232,12 +232,13 @@ func ParseMessage(commonRecord *models.EnvelopeEventCommon, postItems []string) 
 }
 
 func ParseClientReport(postItems []string) (*models.ClientReport, error) {
-	if len(postItems) < 3 {
-		return nil, fmt.Errorf("invalid client report format")
+	payload, ok := models.FindEnvelopeItemPayload(postItems, "client_report")
+	if !ok {
+		return nil, fmt.Errorf("client_report item not found in envelope")
 	}
 
 	var report models.ClientReport
-	if err := json.Unmarshal([]byte(postItems[2]), &report); err != nil {
+	if err := json.Unmarshal([]byte(payload), &report); err != nil {
 		return nil, fmt.Errorf("failed to parse client report data: %v", err)
 	}
 

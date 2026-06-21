@@ -39,6 +39,7 @@ func setupRole(name string, db *gorm.DB, user *models.User, cb RoleRulesCallback
 		models.OrganizationModelName,
 		models.ProjectModelName,
 		models.EnvelopeEventCommonModelName,
+		models.TransactionModelName,
 		models.RoleModelName,
 	} {
 		cb(db, role, entity+"s")
@@ -156,6 +157,8 @@ func SetupDatabase() {
 		&models.Project{},
 		&models.ClientReport{},
 		&models.ClientReportDiscardedEvent{},
+		&models.Transaction{},
+		&models.Span{},
 	)
 	if err != nil {
 		panic(err)
@@ -188,6 +191,10 @@ func SetupDatabase() {
 
 	if err := MigrateStacktraceHash(db); err != nil {
 		fmt.Printf("Warning: Stacktrace hash migration failed: %v\n", err)
+	}
+
+	if err := MigrateTraces(db); err != nil {
+		fmt.Printf("Warning: Traces migration failed: %v\n", err)
 	}
 
 	if config.IsDebug() {
