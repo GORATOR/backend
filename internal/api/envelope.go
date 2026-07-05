@@ -26,14 +26,32 @@ func Envelope(w http.ResponseWriter, r *http.Request) {
 
 	postItems := tryParsePostItems(body)
 
+	fmt.Printf("[envelope] items=%d\n", len(postItems))
+	for i, item := range postItems {
+		preview := item
+		if len(preview) > 120 {
+			preview = preview[:120] + "..."
+		}
+		fmt.Printf("[envelope] [%d] %s\n", i, preview)
+	}
+
+	// Check transaction first — envelopes may contain both transaction + client_report
+	if models.IsTransaction(postItems) {
+		handleTransaction(w, r, postItems)
+		return
+	}
+
 	// Check if this is a client report
 	if models.IsClientReport(postItems) {
 		handleClientReport(w, r, postItems)
 		return
 	}
 
+	fmt.Printf("[envelope] no handler matched (isClientReport=false, isTransaction=false), items=%d\n", len(postItems))
+
 	// Handle regular envelope (existing logic)
 	if len(postItems) != models.EnvelopeRequiredPostItems {
+		fmt.Printf("[envelope] bad item count: got %d, want %d\n", len(postItems), models.EnvelopeRequiredPostItems)
 		utils.HttpReturnBadRequest(w)
 		return
 	}
@@ -187,6 +205,66 @@ func handleClientReport(w http.ResponseWriter, r *http.Request, postItems []stri
 	// Return empty response (like Sentry does for client reports)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("{}"))
+}
+
+func handleTransaction(w http.ResponseWriter, r *http.Request, postItems []string) {
+	fmt.Println("Processing transaction...")
+
+	tx, err := service.ParseTransaction(postItems)
+	if err != nil {
+		fmt.Printf("Failed to parse transaction: %v\n", err)
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	// Reuse existing key extraction via EnvelopeEventCommon helper
+	var dummy models.EnvelopeEventCommon
+	if err := dummy.TryExtractKey(r); err != nil {
+		fmt.Printf("Failed to extract key from transaction: %v\n", err)
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	projectId := tryParseProjectId(r)
+	if projectId == 0 {
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	project := models.Project{}
+	projectResult := database.GetDatabaseConnection().
+		Where("id = ? and active = true", projectId).
+		First(&project)
+	if projectResult.Error != nil {
+		fmt.Printf("Project not found: %v\n", projectResult.Error)
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	if project.EnvelopeKey != dummy.EnvelopeKey {
+		fmt.Printf("Project key mismatch for transaction\n")
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	tx.ProjectID = &project.ID
+
+	if err := database.TransactionSaveData(tx); err != nil {
+		fmt.Printf("Failed to save transaction: %v\n", err)
+		utils.HttpReturnBadRequest(w)
+		return
+	}
+
+	// Some SDKs bundle a client_report in the same envelope — save it too
+	if models.IsClientReport(postItems) {
+		if cr, err := service.ParseClientReport(postItems); err == nil {
+			cr.EnvelopeKey = dummy.EnvelopeKey
+			cr.ProjectID = project.ID
+			database.ClientReportSaveData(cr)
+		}
+	}
+
+	utils.HttpReturnJson(w, models.EnvelopeResponse{Id: tx.EventId})
 }
 
 func tryParseProjectId(r *http.Request) uint {
