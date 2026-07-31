@@ -3,12 +3,18 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/GORATOR/backend/internal/database"
 	"github.com/GORATOR/backend/internal/models"
 	"github.com/GORATOR/backend/internal/service"
 	"github.com/GORATOR/backend/internal/utils"
 )
+
+type traceGroup struct {
+	TraceId string
+	LastID  uint
+}
 
 func Traces(w http.ResponseWriter, r *http.Request) {
 	_, userId := IsAuthorized(r)
@@ -19,6 +25,19 @@ func Traces(w http.ResponseWriter, r *http.Request) {
 	if !service.HasUserAccessToByUserId(uint(userId), models.ActionRead, models.TransactionModelName) {
 		http.Error(w, fmt.Sprintf("Forbidden action \"%s\"", models.ActionRead), http.StatusForbidden)
 		return
+	}
+
+	limit := 10
+	offset := 0
+	if limitStr := utils.GetQueryParam(r, "limit"); limitStr != "" {
+		if val, err := strconv.Atoi(limitStr); err == nil {
+			limit = val
+		}
+	}
+	if offsetStr := utils.GetQueryParam(r, "offset"); offsetStr != "" {
+		if val, err := strconv.Atoi(offsetStr); err == nil {
+			offset = val
+		}
 	}
 
 	db := database.GetDatabaseConnection().Model(&models.Transaction{})
@@ -36,8 +55,36 @@ func Traces(w http.ResponseWriter, r *http.Request) {
 		db.Where("start_timestamp <= ?", to)
 	}
 
-	var txs []models.Transaction
-	db.Preload("Project").Find(&txs)
+	var groups []traceGroup
+	if result := db.Select("trace_id, MAX(id) as last_id").
+		Group("trace_id").
+		Order("last_id DESC").
+		Scan(&groups); result.Error != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	if offset < len(groups) {
+		groups = groups[offset:]
+	} else {
+		groups = nil
+	}
+	if limit < len(groups) {
+		groups = groups[:limit]
+	}
+
+	traceIds := make([]string, 0, len(groups))
+	for _, g := range groups {
+		traceIds = append(traceIds, g.TraceId)
+	}
+
+	txs := make([]models.Transaction, 0)
+	if len(traceIds) > 0 {
+		database.GetDatabaseConnection().
+			Where("trace_id IN ?", traceIds).
+			Preload("Project").
+			Find(&txs)
+	}
 
 	utils.HttpReturnJson(w, txs)
 }
@@ -60,7 +107,7 @@ func TracesCount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var count int64
-	db.Count(&count)
+	db.Distinct("trace_id").Count(&count)
 
 	utils.HttpReturnJson(w, models.ModelCountResponse{
 		Entity: models.TransactionModelName,
