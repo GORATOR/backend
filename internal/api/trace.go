@@ -9,11 +9,39 @@ import (
 	"github.com/GORATOR/backend/internal/models"
 	"github.com/GORATOR/backend/internal/service"
 	"github.com/GORATOR/backend/internal/utils"
+	"gorm.io/gorm"
 )
+
+const maxTracesLimit = 100
 
 type traceGroup struct {
 	TraceId string
 	LastID  uint
+}
+
+// applyTraceFilters is the single source of truth for /traces filters.
+// Both /traces and /traces/count must build their queries from it,
+// otherwise the count stops matching the paginated list.
+func applyTraceFilters(r *http.Request) *gorm.DB {
+	// Transactions without a trace_id are not traces: they must not
+	// occupy page slots or be counted.
+	db := database.GetDatabaseConnection().
+		Model(&models.Transaction{}).
+		Where("trace_id IS NOT NULL AND trace_id <> ''")
+
+	if projectId := utils.GetQueryParam(r, "projectId"); projectId != "" {
+		db = db.Where("project_id = ?", projectId)
+	}
+	if traceId := utils.GetQueryParam(r, "traceId"); traceId != "" {
+		db = db.Where("trace_id = ?", traceId)
+	}
+	if from := utils.GetQueryParam(r, "from"); from != "" {
+		db = db.Where("start_timestamp >= ?", from)
+	}
+	if to := utils.GetQueryParam(r, "to"); to != "" {
+		db = db.Where("start_timestamp <= ?", to)
+	}
+	return db
 }
 
 func Traces(w http.ResponseWriter, r *http.Request) {
@@ -30,47 +58,31 @@ func Traces(w http.ResponseWriter, r *http.Request) {
 	limit := 10
 	offset := 0
 	if limitStr := utils.GetQueryParam(r, "limit"); limitStr != "" {
-		if val, err := strconv.Atoi(limitStr); err == nil {
+		// only positive values are meaningful; negative ones used to panic
+		// on the in-memory slice
+		if val, err := strconv.Atoi(limitStr); err == nil && val > 0 {
 			limit = val
 		}
 	}
 	if offsetStr := utils.GetQueryParam(r, "offset"); offsetStr != "" {
-		if val, err := strconv.Atoi(offsetStr); err == nil {
+		if val, err := strconv.Atoi(offsetStr); err == nil && val > 0 {
 			offset = val
 		}
 	}
-
-	db := database.GetDatabaseConnection().Model(&models.Transaction{})
-
-	if projectId := utils.GetQueryParam(r, "projectId"); projectId != "" {
-		db.Where("project_id = ?", projectId)
-	}
-	if traceId := utils.GetQueryParam(r, "traceId"); traceId != "" {
-		db.Where("trace_id = ?", traceId)
-	}
-	if from := utils.GetQueryParam(r, "from"); from != "" {
-		db.Where("start_timestamp >= ?", from)
-	}
-	if to := utils.GetQueryParam(r, "to"); to != "" {
-		db.Where("start_timestamp <= ?", to)
+	if limit > maxTracesLimit {
+		limit = maxTracesLimit
 	}
 
 	var groups []traceGroup
-	if result := db.Select("trace_id, MAX(id) as last_id").
+	if result := applyTraceFilters(r).
+		Select("trace_id, MAX(id) as last_id").
 		Group("trace_id").
 		Order("last_id DESC").
+		Limit(limit).
+		Offset(offset).
 		Scan(&groups); result.Error != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
-	}
-
-	if offset < len(groups) {
-		groups = groups[offset:]
-	} else {
-		groups = nil
-	}
-	if limit < len(groups) {
-		groups = groups[:limit]
 	}
 
 	traceIds := make([]string, 0, len(groups))
@@ -80,10 +92,16 @@ func Traces(w http.ResponseWriter, r *http.Request) {
 
 	txs := make([]models.Transaction, 0)
 	if len(traceIds) > 0 {
-		database.GetDatabaseConnection().
+		// same filters as the grouping query: without the project filter
+		// cross-project traces would pull in transactions of other projects
+		if result := applyTraceFilters(r).
 			Where("trace_id IN ?", traceIds).
 			Preload("Project").
-			Find(&txs)
+			Order("id").
+			Find(&txs); result.Error != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	utils.HttpReturnJson(w, txs)
@@ -100,14 +118,11 @@ func TracesCount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db := database.GetDatabaseConnection().Model(&models.Transaction{})
-
-	if projectId := utils.GetQueryParam(r, "projectId"); projectId != "" {
-		db.Where("project_id = ?", projectId)
-	}
-
 	var count int64
-	db.Distinct("trace_id").Count(&count)
+	if result := applyTraceFilters(r).Distinct("trace_id").Count(&count); result.Error != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
 
 	utils.HttpReturnJson(w, models.ModelCountResponse{
 		Entity: models.TransactionModelName,

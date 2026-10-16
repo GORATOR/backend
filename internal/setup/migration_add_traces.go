@@ -10,6 +10,7 @@ func MigrateTraces(db *gorm.DB) error {
 	indexes := []string{
 		`CREATE UNIQUE INDEX IF NOT EXISTS unique_transaction_event_id ON transactions (event_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_transaction_trace_id ON transactions (trace_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_transaction_project_trace_id ON transactions (project_id, trace_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_transaction_parent_span_id ON transactions (parent_span_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_span_trace_id ON spans (trace_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_span_parent_span_id ON spans (parent_span_id)`,
