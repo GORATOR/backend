@@ -67,18 +67,22 @@ func (p *Project) UpdateModel(data []byte, userId uint, tx *gorm.DB) (interface{
 	return project, insertResult.Error
 }
 
+// NewEnvelopeKey generates a fresh random ingestion key for a project.
+func NewEnvelopeKey(name string) string {
+	data := fmt.Sprintf(
+		"%s %d %s",
+		name,
+		time.Now().Unix(),
+		utils.RandomString(7),
+	)
+	return utils.GenerateMd5(data)
+}
+
 func (p *Project) GenerateEnvelopeKey() {
 	if p.ID > 0 {
 		return
 	}
-	now := time.Now().Unix()
-	data := fmt.Sprintf(
-		"%s %d %s",
-		p.Name,
-		now,
-		utils.RandomString(7),
-	)
-	p.EnvelopeKey = utils.GenerateMd5(data)
+	p.EnvelopeKey = NewEnvelopeKey(p.Name)
 }
 
 func (p *Project) GetName() string {
