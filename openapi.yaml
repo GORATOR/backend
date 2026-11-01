@@ -1358,7 +1358,7 @@ components:
           type: boolean
         table:
           type: string
-          enum: [roles, teams, projects, organizations, users, envelope_event_commons]
+          enum: [roles, teams, projects, organizations, users, envelope_event_commons, transactions]
       required:
         - action
         - allowed
@@ -1375,7 +1375,7 @@ components:
           type: boolean
         table:
           type: string
-          enum: [roles, teams, projects, organizations, users, envelope_event_commons]
+          enum: [roles, teams, projects, organizations, users, envelope_event_commons, transactions]
     RoleInput:
       type: object
       properties:
