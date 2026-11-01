@@ -26,13 +26,71 @@ func tryCreateRecord(db *gorm.DB, value interface{}) {
 	}
 }
 
+// bindIfMissing reports whether the join table does not link owner and
+// related yet. Join tables have no unique constraints, so appending blindly
+// would create duplicate rows on re-run.
+func bindIfMissing(db *gorm.DB, joinTable string, ownerColumn string, ownerID uint, relatedColumn string, relatedID uint) bool {
+	var bound int64
+	result := db.Table(joinTable).
+		Where(fmt.Sprintf("%s = ? and %s = ?", ownerColumn, relatedColumn), ownerID, relatedID).
+		Count(&bound)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	return bound == 0
+}
+
+func bindTeamOrganization(db *gorm.DB, team *models.Team, org *models.Organization) {
+	if !bindIfMissing(db, "org_teams", "team_id", team.ID, "organization_id", org.ID) {
+		return
+	}
+	if err := db.Model(team).Association("Organizations").Append(org); err != nil {
+		panic(err)
+	}
+}
+
+func bindUserTeamAndOrganization(db *gorm.DB, user *models.User, team *models.Team, org *models.Organization) {
+	if bindIfMissing(db, "team_users", "user_id", user.ID, "team_id", team.ID) {
+		if err := db.Model(user).Association("Teams").Append(team); err != nil {
+			panic(err)
+		}
+	}
+	if bindIfMissing(db, "org_users", "user_id", user.ID, "organization_id", org.ID) {
+		if err := db.Model(user).Association("Organizations").Append(org); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func bindRoleUser(db *gorm.DB, role *models.Role, user *models.User) {
+	if !bindIfMissing(db, "role_users", "role_id", role.ID, "user_id", user.ID) {
+		return
+	}
+	if err := db.Model(role).Association("Users").Append(user); err != nil {
+		panic(err)
+	}
+}
+
 func setupRole(name string, db *gorm.DB, user *models.User, cb RoleRulesCallback) {
 	role := models.Role{
 		Name:   name,
 		Active: true,
-		Users:  []*models.User{user},
 	}
-	tryCreateRecord(db, &role)
+	result := db.Where("name = ?", name).First(&role)
+	switch {
+	case result.Error == nil:
+		bindRoleUser(db, &role, user)
+	case errors.Is(result.Error, gorm.ErrRecordNotFound):
+		role.Users = []*models.User{user}
+		tryCreateRecord(db, &role)
+	default:
+		panic(result.Error)
+	}
+
+	// Recreate rules deterministically, same approach as Role.UpdateModel.
+	// Unscoped: rules are read by raw SQL (service.HasUserAccessToByUserId)
+	// without a deleted_at filter, so old rules must be removed for real.
+	db.Unscoped().Where("role_id = ?", role.ID).Delete(&models.Rule{})
 	for _, entity := range []string{
 		models.TeamModelName,
 		models.UserModelName,
@@ -61,7 +119,7 @@ func setupRoles(db *gorm.DB, userAdmin *models.User, userViewer *models.User) {
 			}
 			rule.Role = role
 			rule.RoleID = role.ID
-			db.Create(&rule)
+			tryCreateRecord(db, &rule)
 		}
 	})
 
@@ -73,7 +131,7 @@ func setupRoles(db *gorm.DB, userAdmin *models.User, userViewer *models.User) {
 		}
 		rule.Role = role
 		rule.RoleID = role.ID
-		db.Create(&rule)
+		tryCreateRecord(db, &rule)
 		for _, action := range []models.RuleAction{
 			models.ActionCreate,
 			models.ActionDelete,
@@ -86,7 +144,7 @@ func setupRoles(db *gorm.DB, userAdmin *models.User, userViewer *models.User) {
 			}
 			rule.Role = role
 			rule.RoleID = role.ID
-			db.Create(&rule)
+			tryCreateRecord(db, &rule)
 		}
 
 	})
@@ -99,27 +157,63 @@ func setupRoles(db *gorm.DB, userAdmin *models.User, userViewer *models.User) {
 		}
 		rule.Role = role
 		rule.RoleID = role.ID
-		db.Create(&rule)
+		tryCreateRecord(db, &rule)
 	})
 
 }
 
-func tryCreateUser(db *gorm.DB, email string, username string, team models.Team, org models.Organization) *models.User {
+func tryFindOrCreateOrganization(db *gorm.DB, name string) *models.Organization {
+	var org models.Organization
+	result := db.Where("name = ?", name).First(&org)
+	if result.Error == nil {
+		return &org
+	}
+	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		panic(result.Error)
+	}
+	org = models.Organization{
+		Name:   name,
+		Active: true,
+	}
+	tryCreateRecord(db, &org)
+	return &org
+}
+
+func tryFindOrCreateTeam(db *gorm.DB, name string, org *models.Organization) *models.Team {
+	var team models.Team
+	result := db.Where("name = ?", name).First(&team)
+	if result.Error == nil {
+		bindTeamOrganization(db, &team, org)
+		return &team
+	}
+	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		panic(result.Error)
+	}
+	team = models.Team{
+		Organizations: []*models.Organization{org},
+		Name:          name,
+		Active:        true,
+	}
+	tryCreateRecord(db, &team)
+	return &team
+}
+
+func tryCreateUser(db *gorm.DB, email string, username string, team *models.Team, org *models.Organization) *models.User {
 	user := models.User{
 		Username: username,
 		Email:    email,
 		Active:   true,
 	}
-	result := db.Model(&models.User{}).Where("username = ? and email = ?", username, email).Find(&user)
-	if result.Error != nil {
-		fmt.Print(result.Error)
-		return nil
-	}
-	if result.RowsAffected == 1 {
+	result := db.Where("username = ? and email = ?", username, email).First(&user)
+	if result.Error == nil {
+		bindUserTeamAndOrganization(db, &user, team, org)
 		return &user
 	}
-	user.Teams = []*models.Team{&team}
-	user.Organizations = []*models.Organization{&org}
+	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		panic(result.Error)
+	}
+	user.Teams = []*models.Team{team}
+	user.Organizations = []*models.Organization{org}
 
 	salt := utils.StringFromEnv("GORATOR_SALT", "")
 	if salt == "" {
@@ -163,22 +257,33 @@ func SetupDatabase() {
 	if err != nil {
 		panic(err)
 	}
-	uniqueIndexResult := db.Raw("CREATE UNIQUE INDEX unique_name_version ON event_common_sdks (name, version)")
-	if uniqueIndexResult.Error != nil {
-		panic(uniqueIndexResult.Error)
+
+	if err := DeduplicateData(db); err != nil {
+		panic(err)
 	}
 
-	uniqueIndexResult = db.Raw("CREATE UNIQUE INDEX unique_ee_tag ON envelope_tags (name, value)")
-	if uniqueIndexResult.Error != nil {
-		panic(uniqueIndexResult.Error)
+	uniqueIndexes := []string{
+		`CREATE UNIQUE INDEX IF NOT EXISTS unique_name_version ON event_common_sdks (name, version)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS unique_ee_tag ON envelope_tags (name, value)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS unique_envelope_key ON projects (envelope_key)`,
+	}
+	for _, idx := range uniqueIndexes {
+		if err := db.Exec(idx).Error; err != nil {
+			panic(fmt.Errorf("failed to create unique index (%s): %w", idx, err))
+		}
 	}
 
-	envelopeKeyIndexResult := db.Raw("CREATE UNIQUE INDEX unique_envelope_key ON projects (envelope_key)")
-	if envelopeKeyIndexResult.Error != nil {
-		panic(uniqueIndexResult.Error)
+	var undefinedSdk models.EventCommonSdk
+	undefinedSdkResult := db.Where(
+		"name = ? and version = ?",
+		models.UndefinedSdk.Name,
+		models.UndefinedSdk.Version,
+	).First(&undefinedSdk)
+	if errors.Is(undefinedSdkResult.Error, gorm.ErrRecordNotFound) {
+		tryCreateRecord(db, &models.UndefinedSdk)
+	} else if undefinedSdkResult.Error != nil {
+		panic(undefinedSdkResult.Error)
 	}
-
-	tryCreateRecord(db, &models.UndefinedSdk)
 
 	// Run migration for exception fields
 	if err := MigrateExceptionFields(db); err != nil {
@@ -198,24 +303,11 @@ func SetupDatabase() {
 	}
 
 	if config.IsDebug() {
-		org := models.Organization{
-			Name:   "Test Organization",
-			Active: true,
-		}
-		tryCreateRecord(db, &org)
-
-		team := models.Team{
-			Organizations: []*models.Organization{&org},
-			Name:          "Test Team",
-			Active:        true,
-		}
-		tryCreateRecord(db, &team)
+		org := tryFindOrCreateOrganization(db, "Test Organization")
+		team := tryFindOrCreateTeam(db, "Test Team", org)
 		userAdmin := tryCreateUser(db, "user1@email.com", "userAdmin", team, org)
 		userViewer := tryCreateUser(db, "user2@email.com", "userViewer", team, org)
-		if userAdmin != nil && userViewer != nil {
-			db.Exec("TRUNCATE TABLE rules, role_users, roles RESTART IDENTITY")
-			setupRoles(db, userAdmin, userViewer)
-		}
+		setupRoles(db, userAdmin, userViewer)
 	}
 	fmt.Println("database setup is done")
 }
